@@ -11,12 +11,12 @@
   "errors": [],
   "timings_ms": {
     "load_json": 0,
-    "schema": 136,
-    "model": 136,
-    "generate": 138,
-    "templates": 138,
-    "typst": 152,
-    "compile_ms": 391,
-    "compile": 543
+    "schema": 195,
+    "model": 196,
+    "generate": 198,
+    "templates": 198,
+    "typst": 211,
+    "compile_ms": 2406,
+    "compile": 2618
   }
 }
