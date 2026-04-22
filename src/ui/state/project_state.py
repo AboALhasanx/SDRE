@@ -42,7 +42,8 @@ from src.models.types import Identifier
 
 
 def _now_rfc3339() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    # Millisecond precision so consecutive edits in the same second still bump updated_at.
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def new_project_file() -> ProjectFile:
@@ -101,7 +102,8 @@ def load_project_file(path: str | Path) -> ProjectFile:
 def save_project_file(pf: ProjectFile, path: str | Path) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    payload = pf.model_dump(mode="json")
+    # Keep saved JSON schema-compatible: do not emit optional fields as null.
+    payload = pf.model_dump(mode="json", exclude_none=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 

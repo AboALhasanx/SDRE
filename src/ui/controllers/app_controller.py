@@ -96,3 +96,18 @@ class AppController:
         os.startfile(str(build_dir))  # Windows
         return build_dir
 
+    def open_generated_typst(self) -> Path:
+        root = Path(__file__).resolve().parents[3]
+        p = root / "build" / "generated_content.typ"
+        if not p.exists():
+            raise FileNotFoundError(str(p))
+        os.startfile(str(p))
+        return p
+
+    def open_last_build_report(self) -> Path:
+        root = Path(__file__).resolve().parents[3]
+        p = root / "build" / "build_report.json"
+        if not p.exists():
+            raise FileNotFoundError(str(p))
+        os.startfile(str(p))
+        return p

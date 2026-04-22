@@ -10,6 +10,7 @@ import customtkinter as ctk
 
 from src.ui.controllers.app_controller import AppController
 from src.ui.forms.block_forms import make_block_form
+from src.ui.forms.project_settings import ProjectSettingsDialog
 from src.ui.state import project_state as ps
 from src.ui.widgets.log_panel import LogPanel
 
@@ -46,7 +47,11 @@ class MainWindow(ctk.CTk):
         file_m.add_command(label="Save", command=self._save)
         file_m.add_command(label="Save As...", command=self._save_as)
         file_m.add_separator()
+        file_m.add_command(label="Project Settings...", command=self._project_settings)
+        file_m.add_separator()
         file_m.add_command(label="Open Output Folder", command=self._open_output_folder)
+        file_m.add_command(label="Open Generated Typst", command=self._open_generated_typst)
+        file_m.add_command(label="Open Last Build Report", command=self._open_last_build_report)
         file_m.add_separator()
         file_m.add_command(label="Exit", command=self._on_close)
 
@@ -285,6 +290,14 @@ class MainWindow(ctk.CTk):
         except Exception as e:
             messagebox.showerror("Save failed", str(e))
 
+    def _project_settings(self) -> None:
+        def _applied():
+            self._update_title()
+            self._refresh_blocks()
+            self.logs.set_status("Project settings updated (unsaved)")
+
+        ProjectSettingsDialog(self, controller=self.controller, on_applied=_applied)
+
     def _validate(self) -> None:
         rep = self.controller.validate_current_file()
         self.logs.clear()
@@ -314,6 +327,20 @@ class MainWindow(ctk.CTk):
         try:
             p = self.controller.open_output_folder()
             self.logs.set_status(f"Opened output folder: {p}")
+        except Exception as e:
+            messagebox.showerror("Failed", str(e))
+
+    def _open_generated_typst(self) -> None:
+        try:
+            p = self.controller.open_generated_typst()
+            self.logs.set_status(f"Opened: {p}")
+        except Exception as e:
+            messagebox.showerror("Failed", str(e))
+
+    def _open_last_build_report(self) -> None:
+        try:
+            p = self.controller.open_last_build_report()
+            self.logs.set_status(f"Opened: {p}")
         except Exception as e:
             messagebox.showerror("Failed", str(e))
 
@@ -466,4 +493,3 @@ class MainWindow(ctk.CTk):
         self._refresh_blocks()
         self.blocks.selection_set(bid)
         self._update_title()
-
