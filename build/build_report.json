@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "mode": "strict",
+  "source_file": "examples\\sample_project.json",
+  "generated_typst_file": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\generated_content.typ",
+  "template_file": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\templates\\main.typ",
+  "output_pdf": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\output.pdf",
+  "stage": "ok",
+  "stdout": "",
+  "stderr": "warning: unknown font family: noto sans arabic\n   ┌─ \\\\?\\C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\templates\\macros.typ:20:10\n   │\n20 │     font: theme.fonts.base,\n   │           ^^^^^^^^^^^^^^^^\n\n",
+  "errors": [],
+  "timings_ms": {
+    "load_json": 0,
+    "schema": 136,
+    "model": 136,
+    "generate": 138,
+    "templates": 138,
+    "typst": 152,
+    "compile_ms": 391,
+    "compile": 543
+  }
+}

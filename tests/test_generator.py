@@ -28,7 +28,7 @@ def test_inline_rendering_text_ltr_math_code():
     ]
     out = render_inlines(nodes)
     assert "Hello" in out
-    assert '#sdre_ltr("Binary Search", style: "boxed")' in out
+    assert '#sdre_ltr("Binary Search", theme: theme, style: "boxed")' in out
     assert "#sdre_inline_math($O(log n)$)" in out
     assert '#sdre_inline_code("x += 1", lang: "python")' in out
 
@@ -99,4 +99,3 @@ def test_full_project_generation_from_sample():
     assert "#sdre_code_block(" in typ
     assert "#sdre_table(" in typ
     assert "#sdre_image_placeholder(" in typ
-

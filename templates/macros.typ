@@ -5,7 +5,7 @@
 
 #let sdre_document(meta, theme, body) = {
   // Page shell
-  #set page(
+  set page(
     paper: if theme.page.size == "A4" { "a4" } else { "us-letter" },
     margin: (
       top: theme.page.margin_mm.top * 1mm,
@@ -16,7 +16,7 @@
   )
 
   // Text defaults
-  #set text(
+  set text(
     font: theme.fonts.base,
     size: if theme.text != none { theme.text.base_size_px * 1pt } else { 11pt },
     fill: sdre_color(theme.colors.text),
@@ -25,7 +25,7 @@
   )
 
   // Background (light touch)
-  #set page(fill: sdre_color(theme.colors.background))
+  set page(fill: sdre_color(theme.colors.background))
 
   body
 }
@@ -38,19 +38,14 @@
 #let sdre_paragraph(content) = content
 
 // Central LTR inline macro (RTL docs still need LTR terms)
-#let sdre_ltr(value, style: "plain") = {
+#let sdre_ltr(value, style: "plain", theme: none) = {
+  let mono_font = if theme != none { theme.fonts.mono } else { none }
   if style == "mono" {
-    text(font: theme.fonts.mono, dir: ltr)[value]
+    if mono_font != none { text(font: mono_font, dir: ltr)[value] } else { text(dir: ltr)[value] }
   } else if style == "boxed" {
     box(
       inset: (x: 4pt, y: 2pt),
-      stroke: 1pt + sdre_color(
-        if theme.ltr_inline_style != none and theme.ltr_inline_style.boxed_border_color != none {
-          theme.ltr_inline_style.boxed_border_color
-        } else {
-          theme.colors.border
-        }
-      ),
+      stroke: 1pt + sdre_color(if theme != none { theme.colors.border } else { "#AAAAAA" }),
       radius: 2pt,
     )[text(dir: ltr)[value]]
   } else {
@@ -67,22 +62,25 @@
 #let sdre_math_block(value) = value
 
 // Horizontal rule / page break
-#let sdre_horizontal_rule() = line(length: 100%, stroke: 1pt + sdre_color(theme.colors.border))
+#let sdre_horizontal_rule(theme: none) = line(
+  length: 100%,
+  stroke: 1pt + sdre_color(if theme != none { theme.colors.border } else { "#DDDDDD" })
+)
 #let sdre_page_break() = pagebreak()
 
 // Notes / warnings
-#let sdre_note(content) = block(
-  fill: sdre_color(theme.colors.code_bg),
+#let sdre_note(content, theme: none) = block(
+  fill: sdre_color(if theme != none { theme.colors.code_bg } else { "#F6F8FA" }),
   inset: 8pt,
   radius: 3pt,
-  stroke: 1pt + sdre_color(theme.colors.border),
+  stroke: 1pt + sdre_color(if theme != none { theme.colors.border } else { "#DDDDDD" }),
 )[content]
 
-#let sdre_warning(content) = block(
+#let sdre_warning(content, theme: none) = block(
   fill: luma(95%),
   inset: 8pt,
   radius: 3pt,
-  stroke: 1pt + sdre_color(theme.colors.accent),
+  stroke: 1pt + sdre_color(if theme != none { theme.colors.accent } else { "#CC5500" }),
 )[content]
 
 // Lists
@@ -96,9 +94,11 @@
 }
 
 // Image placeholder: reserved box + optional label/caption.
-#let sdre_image_placeholder(reserve_height: none, aspect_ratio: none, border: true, label: none, caption: none) = {
+#let sdre_image_placeholder(theme: none, reserve_height: none, aspect_ratio: none, border: true, label: none, caption: none) = {
   let h = if reserve_height != none { reserve_height } else { 50mm }
-  let stroke_val = if border { 1pt + sdre_color(theme.colors.border) } else { none }
+  let stroke_val = if border {
+    1pt + sdre_color(if theme != none { theme.colors.border } else { "#DDDDDD" })
+  } else { none }
 
   rect(
     width: 100%,

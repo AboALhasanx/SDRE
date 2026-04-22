@@ -74,28 +74,23 @@ def render_block(block: Block) -> str:
 
     if isinstance(block, BlockImagePlaceholder):
         caption = f"[{render_inlines(block.caption)}]" if block.caption else "none"
-        label_arg = f', label: "{_escape_typst_string(block.label)}"' if block.label else ""
-        border_arg = f", border: {str(block.border).lower()}" if block.border is not None else ""
-        height_arg = (
-            f", reserve_height: {_fmt_num(block.reserve_height_mm)}mm"
-            if block.reserve_height_mm is not None
-            else ""
-        )
-        aspect_arg = (
-            f", aspect_ratio: {_fmt_num(block.aspect_ratio)}"
-            if block.aspect_ratio is not None
-            else ""
-        )
-        return (
-            header
-            + f"#sdre_image_placeholder({height_arg}{aspect_arg}{border_arg}{label_arg}, caption: {caption})\n"
-        )
+        args: list[str] = []
+        if block.reserve_height_mm is not None:
+            args.append(f"reserve_height: {_fmt_num(block.reserve_height_mm)}mm")
+        if block.aspect_ratio is not None:
+            args.append(f"aspect_ratio: {_fmt_num(block.aspect_ratio)}")
+        if block.border is not None:
+            args.append(f"border: {str(block.border).lower()}")
+        if block.label:
+            args.append(f'label: "{_escape_typst_string(block.label)}"')
+        args.append(f"caption: {caption}")
+        return header + f"#sdre_image_placeholder(theme: theme, {', '.join(args)})\n"
 
     if isinstance(block, BlockNote):
-        return header + f"#sdre_note([{render_inlines(block.content)}])\n"
+        return header + f"#sdre_note([{render_inlines(block.content)}], theme: theme)\n"
 
     if isinstance(block, BlockWarning):
-        return header + f"#sdre_warning([{render_inlines(block.content)}])\n"
+        return header + f"#sdre_warning([{render_inlines(block.content)}], theme: theme)\n"
 
     if isinstance(block, BlockBulletList):
         items = "(" + ", ".join(_render_inline_item(i) for i in block.items) + ")"
@@ -109,7 +104,7 @@ def render_block(block: Block) -> str:
         return header + "#sdre_page_break()\n"
 
     if isinstance(block, BlockHorizontalRule):
-        return header + "#sdre_horizontal_rule()\n"
+        return header + "#sdre_horizontal_rule(theme: theme)\n"
 
     raise TypeError(f"Unsupported block: {type(block).__name__}")
 

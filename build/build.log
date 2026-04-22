@@ -1,0 +1,7 @@
+ok=True mode=strict stage=ok
+=== stderr ===
+warning: unknown font family: noto sans arabic
+   ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\templates\macros.typ:20:10
+   │
+20 │     font: theme.fonts.base,
+   │           ^^^^^^^^^^^^^^^^

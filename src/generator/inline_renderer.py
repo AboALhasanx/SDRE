@@ -26,7 +26,7 @@ def render_inline(node: InlineNode) -> str:
 
     if isinstance(node, InlineLtr):
         style = node.style or "plain"
-        return f'#sdre_ltr("{_escape_typst_string(node.value)}", style: "{style}")'
+        return f'#sdre_ltr("{_escape_typst_string(node.value)}", theme: theme, style: "{style}")'
 
     if isinstance(node, InlineCode):
         lang_arg = f', lang: "{_escape_typst_string(node.lang)}"' if node.lang else ""
@@ -42,4 +42,3 @@ def render_inline(node: InlineNode) -> str:
 
 def render_inlines(nodes: list[InlineNode]) -> str:
     return "".join(render_inline(n) for n in nodes)
-
