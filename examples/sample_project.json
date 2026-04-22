@@ -1,0 +1,85 @@
+{
+  "project": {
+    "meta": {
+      "id": "sdre_demo",
+      "title": "SDRE Sample Project",
+      "subtitle": "Phase 1 Revised Example",
+      "author": "SDRE",
+      "language": "ar",
+      "direction": "rtl",
+      "version": "0.1",
+      "created_at": "2026-04-22T10:00:00Z",
+      "updated_at": "2026-04-22T10:00:00Z"
+    },
+    "theme": {
+      "page": {
+        "size": "A4",
+        "dpi": 300,
+        "margin_mm": { "top": 15, "right": 15, "bottom": 15, "left": 15 }
+      },
+      "fonts": { "base": "Noto Sans Arabic", "mono": "JetBrains Mono", "math": "STIX Two Math" },
+      "colors": {
+        "text": "#111111",
+        "background": "#FFFFFF",
+        "muted": "#666666",
+        "accent": "#0B5FFF",
+        "border": "#DDDDDD",
+        "code_bg": "#F6F8FA"
+      },
+      "text": { "base_size_px": 14, "line_height": 1.6 },
+      "ltr_inline_style": { "boxed_border_color": "#DDDDDD" }
+    },
+    "subjects": [
+      {
+        "id": "subject_1",
+        "title": "البحث الثنائي",
+        "description": "موضوع واحد لاختبار الرندرة الجزئية.",
+        "blocks": [
+          { "id": "sec_1", "type": "section", "title": "مقدمة" },
+          {
+            "id": "p_1",
+            "type": "paragraph",
+            "content": [
+              { "type": "text", "value": "تُستخدم " },
+              { "type": "ltr", "value": "Binary Search", "style": "boxed" },
+              { "type": "text", "value": " داخل البيانات المرتبة بتعقيد " },
+              { "type": "inline_math", "value": "O(log n)" },
+              { "type": "text", "value": "." }
+            ]
+          },
+          {
+            "id": "code_1",
+            "type": "code_block",
+            "lang": "python",
+            "value": "def binary_search(a, x):\n    lo, hi = 0, len(a) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if a[mid] == x:\n            return mid\n        if a[mid] < x:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n"
+          },
+          {
+            "id": "tbl_1",
+            "type": "table",
+            "caption": [{ "type": "text", "value": "مثال جدول بسيط" }],
+            "rows": [
+              [
+                { "content": [{ "type": "text", "value": "n" }] },
+                { "content": [{ "type": "text", "value": "الزمن" }] }
+              ],
+              [
+                { "content": [{ "type": "text", "value": "1024" }] },
+                { "content": [{ "type": "inline_math", "value": "O(log n)" }] }
+              ]
+            ]
+          },
+          {
+            "id": "imgph_1",
+            "type": "image_placeholder",
+            "label": "Figure 1",
+            "border": true,
+            "reserve_height_mm": 40,
+            "caption": [{ "type": "text", "value": "مكان مخصص للصورة لاحقًا." }]
+          },
+          { "id": "pb_1", "type": "page_break" }
+        ]
+      }
+    ]
+  }
+}
+

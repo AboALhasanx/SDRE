@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Annotated, Literal, Union
 
 from pydantic import Field
+from pydantic import model_validator
 
 from ._base import SDREModel
 from .inlines import InlineNode
@@ -10,40 +11,37 @@ from .types import Identifier
 
 
 class BlockBase(SDREModel):
-    id: Identifier | None = None
-    subject_id: Identifier | None = None
+    id: Identifier
 
 
 class BlockSection(BlockBase):
     type: Literal["section"]
-    title: list[InlineNode] = Field(min_length=1)
-    blocks: list["Block"] = Field(default_factory=list)
+    title: str = Field(min_length=1, max_length=256)
 
 
-class BlockHeading(BlockBase):
-    type: Literal["heading"]
-    level: int = Field(ge=1, le=6)
-    inlines: list[InlineNode] = Field(min_length=1)
+class BlockSubsection(BlockBase):
+    type: Literal["subsection"]
+    title: str = Field(min_length=1, max_length=256)
 
 
 class BlockParagraph(BlockBase):
     type: Literal["paragraph"]
-    inlines: list[InlineNode] = Field(min_length=1)
+    content: list[InlineNode] = Field(min_length=1)
 
 
-class BlockCode(BlockBase):
-    type: Literal["code"]
-    code: str
+class BlockCodeBlock(BlockBase):
+    type: Literal["code_block"]
+    value: str
     lang: str | None = Field(default=None, min_length=1, max_length=32)
 
 
-class BlockMath(BlockBase):
-    type: Literal["math"]
-    latex: str = Field(min_length=1, max_length=65535)
+class BlockMathBlock(BlockBase):
+    type: Literal["math_block"]
+    value: str = Field(min_length=1, max_length=65535)
 
 
 class TableCell(SDREModel):
-    inlines: list[InlineNode] = Field(min_length=1)
+    content: list[InlineNode] = Field(min_length=1)
 
 
 class BlockTable(BlockBase):
@@ -59,65 +57,65 @@ class BlockImage(BlockBase):
     caption: list[InlineNode] | None = None
 
 
-class ListItem(SDREModel):
-    checked: bool | None = None
-    blocks: list["Block"] = Field(min_length=1)
+class BlockImagePlaceholder(BlockBase):
+    type: Literal["image_placeholder"]
+    caption: list[InlineNode] | None = None
+    reserve_height_mm: float | None = Field(default=None, gt=0, le=1000)
+    aspect_ratio: float | None = Field(default=None, gt=0, le=100)
+    border: bool | None = None
+    label: str | None = Field(default=None, min_length=1, max_length=64)
+
+    @model_validator(mode="after")
+    def _require_size_hint(self) -> "BlockImagePlaceholder":
+        if self.reserve_height_mm is None and self.aspect_ratio is None:
+            raise ValueError("image_placeholder requires reserve_height_mm or aspect_ratio")
+        return self
 
 
-class BlockList(BlockBase):
-    type: Literal["list"]
-    ordered: bool
-    items: list[ListItem] = Field(min_length=1)
+class BlockNote(BlockBase):
+    type: Literal["note"]
+    content: list[InlineNode] = Field(min_length=1)
 
 
-class BlockQuote(BlockBase):
-    type: Literal["quote"]
-    blocks: list["Block"] = Field(min_length=1)
-    cite: str | None = Field(default=None, max_length=2048)
+class BlockWarning(BlockBase):
+    type: Literal["warning"]
+    content: list[InlineNode] = Field(min_length=1)
 
 
-class BlockCallout(BlockBase):
-    type: Literal["callout"]
-    kind: Literal["note", "info", "success", "warning", "error"]
-    blocks: list["Block"] = Field(min_length=1)
-    title: list[InlineNode] | None = None
+class BlockBulletList(BlockBase):
+    type: Literal["bullet_list"]
+    items: list[list[InlineNode]] = Field(min_length=1)
 
 
-class BlockHorizontalRule(BlockBase):
-    type: Literal["horizontal_rule"]
+class BlockNumberedList(BlockBase):
+    type: Literal["numbered_list"]
+    items: list[list[InlineNode]] = Field(min_length=1)
 
 
 class BlockPageBreak(BlockBase):
     type: Literal["page_break"]
 
 
-class BlockToc(BlockBase):
-    type: Literal["toc"]
-    depth: int = Field(ge=1, le=6)
-
-
-class BlockFootnote(BlockBase):
-    type: Literal["footnote"]
-    key: Identifier
-    blocks: list["Block"] = Field(min_length=1)
+class BlockHorizontalRule(BlockBase):
+    type: Literal["horizontal_rule"]
 
 
 Block = Annotated[
     Union[
         BlockSection,
-        BlockHeading,
+        BlockSubsection,
         BlockParagraph,
-        BlockCode,
-        BlockMath,
+        BlockCodeBlock,
+        BlockMathBlock,
         BlockTable,
         BlockImage,
-        BlockList,
-        BlockQuote,
-        BlockCallout,
-        BlockHorizontalRule,
+        BlockImagePlaceholder,
+        BlockNote,
+        BlockWarning,
+        BlockBulletList,
+        BlockNumberedList,
         BlockPageBreak,
-        BlockToc,
-        BlockFootnote,
+        BlockHorizontalRule,
     ],
     Field(discriminator="type"),
 ]
@@ -125,20 +123,18 @@ Block = Annotated[
 
 for _m in (
     BlockSection,
-    BlockHeading,
+    BlockSubsection,
     BlockParagraph,
-    BlockCode,
-    BlockMath,
+    BlockCodeBlock,
+    BlockMathBlock,
     BlockTable,
     BlockImage,
-    BlockList,
-    BlockQuote,
-    BlockCallout,
-    BlockHorizontalRule,
+    BlockImagePlaceholder,
+    BlockNote,
+    BlockWarning,
+    BlockBulletList,
+    BlockNumberedList,
     BlockPageBreak,
-    BlockToc,
-    BlockFootnote,
-    ListItem,
+    BlockHorizontalRule,
 ):
     _m.model_rebuild()
-

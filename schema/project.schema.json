@@ -1,24 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.local/sdre/project.schema.json",
-  "title": "Structured Document Rendering Engine (SDRE) Project",
+  "title": "Structured Document Rendering Engine (SDRE) Project File",
   "type": "object",
   "additionalProperties": false,
-  "required": ["meta", "theme", "subjects", "blocks"],
+  "required": ["project"],
   "properties": {
-    "meta": { "$ref": "#/$defs/Meta" },
-    "theme": { "$ref": "#/$defs/Theme" },
-    "subjects": {
-      "description": "Subjects are keyed by subject id to guarantee uniqueness at the schema level.",
-      "type": "object",
-      "propertyNames": { "$ref": "#/$defs/Identifier" },
-      "additionalProperties": { "$ref": "#/$defs/Subject" }
-    },
-    "blocks": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/Block" }
-    }
+    "project": { "$ref": "#/$defs/Project" }
   },
   "$defs": {
     "Identifier": {
@@ -37,90 +25,65 @@
       "type": "string",
       "pattern": "^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
     },
+    "DateTime": { "type": "string", "format": "date-time" },
+    "Project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["meta", "theme", "subjects"],
+      "properties": {
+        "meta": { "$ref": "#/$defs/Meta" },
+        "theme": { "$ref": "#/$defs/Theme" },
+        "subjects": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Subject" }
+        }
+      }
+    },
     "Meta": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "title", "author", "lang", "direction"],
+      "required": ["id", "title", "author", "language", "direction"],
       "properties": {
         "id": { "$ref": "#/$defs/Identifier" },
         "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "subtitle": { "type": "string", "minLength": 1, "maxLength": 256 },
         "author": { "type": "string", "minLength": 1, "maxLength": 256 },
-        "lang": { "$ref": "#/$defs/BCP47" },
-        "direction": { "type": "string", "enum": ["ltr", "rtl"] }
+        "language": { "$ref": "#/$defs/BCP47" },
+        "direction": { "type": "string", "enum": ["ltr", "rtl"] },
+        "version": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "created_at": { "$ref": "#/$defs/DateTime" },
+        "updated_at": { "$ref": "#/$defs/DateTime" }
       }
     },
     "Theme": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fonts", "sizes", "colors", "page"],
+      "required": ["page", "fonts", "colors"],
       "properties": {
-        "fonts": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["base", "mono"],
-          "properties": {
-            "base": { "type": "string", "minLength": 1, "maxLength": 128 },
-            "mono": { "type": "string", "minLength": 1, "maxLength": 128 },
-            "math": { "type": "string", "minLength": 1, "maxLength": 128 }
-          }
-        },
-        "sizes": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["base_px", "line_height", "h1_px", "h2_px", "h3_px", "h4_px", "h5_px", "h6_px"],
-          "properties": {
-            "base_px": { "type": "number", "minimum": 6, "maximum": 72 },
-            "line_height": { "type": "number", "minimum": 1.0, "maximum": 3.0 },
-            "h1_px": { "type": "number", "minimum": 6, "maximum": 200 },
-            "h2_px": { "type": "number", "minimum": 6, "maximum": 200 },
-            "h3_px": { "type": "number", "minimum": 6, "maximum": 200 },
-            "h4_px": { "type": "number", "minimum": 6, "maximum": 200 },
-            "h5_px": { "type": "number", "minimum": 6, "maximum": 200 },
-            "h6_px": { "type": "number", "minimum": 6, "maximum": 200 }
-          }
-        },
-        "colors": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["text", "background", "muted", "accent", "border", "code_bg"],
-          "properties": {
-            "text": { "$ref": "#/$defs/ColorHex" },
-            "background": { "$ref": "#/$defs/ColorHex" },
-            "muted": { "$ref": "#/$defs/ColorHex" },
-            "accent": { "$ref": "#/$defs/ColorHex" },
-            "border": { "$ref": "#/$defs/ColorHex" },
-            "code_bg": { "$ref": "#/$defs/ColorHex" }
-          }
-        },
-        "page": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["size", "dpi", "margin_mm"],
-          "properties": {
-            "size": { "type": "string", "enum": ["A4", "Letter"] },
-            "dpi": { "type": "integer", "minimum": 72, "maximum": 1200 },
-            "margin_mm": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["top", "right", "bottom", "left"],
-              "properties": {
-                "top": { "type": "number", "minimum": 0, "maximum": 100 },
-                "right": { "type": "number", "minimum": 0, "maximum": 100 },
-                "bottom": { "type": "number", "minimum": 0, "maximum": 100 },
-                "left": { "type": "number", "minimum": 0, "maximum": 100 }
-              }
-            }
-          }
-        }
+        "page": { "$ref": "#/$defs/ThemePage" },
+        "fonts": { "$ref": "#/$defs/ThemeFonts" },
+        "text": { "$ref": "#/$defs/ThemeText" },
+        "colors": { "$ref": "#/$defs/ThemeColors" },
+        "headings": { "$ref": "#/$defs/ThemeHeadings" },
+        "code": { "$ref": "#/$defs/ThemeCode" },
+        "tables": { "$ref": "#/$defs/ThemeTables" },
+        "ltr_inline_style": { "$ref": "#/$defs/ThemeLtrInlineStyle" }
       }
     },
     "Subject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name"],
+      "required": ["id", "title", "blocks"],
       "properties": {
-        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
-        "description": { "type": "string", "maxLength": 4096 }
+        "id": { "$ref": "#/$defs/Identifier" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 4096 },
+        "blocks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Block" }
+        }
       }
     },
     "InlineNode": {
@@ -134,166 +97,120 @@
     "InlineText": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "text"],
+      "required": ["type", "value"],
       "properties": {
         "type": { "const": "text" },
-        "text": { "type": "string" }
+        "value": { "type": "string" }
       }
     },
     "InlineCode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "code"],
+      "required": ["type", "value"],
       "properties": {
-        "type": { "const": "code" },
-        "code": { "type": "string" },
+        "type": { "const": "inline_code" },
+        "value": { "type": "string" },
         "lang": { "type": "string", "minLength": 1, "maxLength": 32 }
       }
     },
     "InlineMath": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "latex"],
+      "required": ["type", "value"],
       "properties": {
-        "type": { "const": "math" },
-        "latex": { "type": "string", "minLength": 1, "maxLength": 8192 }
+        "type": { "const": "inline_math" },
+        "value": { "type": "string", "minLength": 1, "maxLength": 8192 }
       }
     },
     "InlineLtr": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "children"],
+      "required": ["type", "value"],
       "properties": {
         "type": { "const": "ltr" },
-        "children": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "oneOf": [
-              { "$ref": "#/$defs/InlineText" },
-              { "$ref": "#/$defs/InlineCode" },
-              { "$ref": "#/$defs/InlineMath" }
-            ]
-          }
-        }
+        "value": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "style": { "type": "string", "enum": ["plain", "boxed", "mono"] }
       }
     },
     "Block": {
       "oneOf": [
         { "$ref": "#/$defs/BlockSection" },
-        { "$ref": "#/$defs/BlockHeading" },
         { "$ref": "#/$defs/BlockParagraph" },
-        { "$ref": "#/$defs/BlockCode" },
-        { "$ref": "#/$defs/BlockMath" },
+        { "$ref": "#/$defs/BlockSubsection" },
+        { "$ref": "#/$defs/BlockCodeBlock" },
+        { "$ref": "#/$defs/BlockMathBlock" },
         { "$ref": "#/$defs/BlockTable" },
         { "$ref": "#/$defs/BlockImage" },
-        { "$ref": "#/$defs/BlockList" },
-        { "$ref": "#/$defs/BlockQuote" },
-        { "$ref": "#/$defs/BlockCallout" },
+        { "$ref": "#/$defs/BlockImagePlaceholder" },
+        { "$ref": "#/$defs/BlockNote" },
+        { "$ref": "#/$defs/BlockWarning" },
+        { "$ref": "#/$defs/BlockBulletList" },
+        { "$ref": "#/$defs/BlockNumberedList" },
         { "$ref": "#/$defs/BlockHorizontalRule" },
-        { "$ref": "#/$defs/BlockPageBreak" },
-        { "$ref": "#/$defs/BlockToc" },
-        { "$ref": "#/$defs/BlockFootnote" }
+        { "$ref": "#/$defs/BlockPageBreak" }
       ]
     },
-    "BlockCommon": {
+    "BlockSection": {
       "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "title"],
       "properties": {
         "id": { "$ref": "#/$defs/Identifier" },
-        "subject_id": { "$ref": "#/$defs/Identifier" }
+        "type": { "const": "section" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 256 }
       }
     },
-    "BlockSection": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type", "title", "blocks"],
-          "properties": {
-            "type": { "const": "section" },
-            "title": {
-              "type": "array",
-              "minItems": 1,
-              "items": { "$ref": "#/$defs/InlineNode" }
-            },
-            "blocks": { "type": "array", "items": { "$ref": "#/$defs/Block" } }
-          }
-        }
-      ],
-      "unevaluatedProperties": false
-    },
-    "BlockHeading": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type", "level", "inlines"],
-          "properties": {
-            "type": { "const": "heading" },
-            "level": { "type": "integer", "minimum": 1, "maximum": 6 },
-            "inlines": {
-              "type": "array",
-              "minItems": 1,
-              "items": { "$ref": "#/$defs/InlineNode" }
-            }
-          }
-        }
-      ],
-      "unevaluatedProperties": false
+    "BlockSubsection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "title"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "subsection" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
     },
     "BlockParagraph": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type", "inlines"],
-          "properties": {
-            "type": { "const": "paragraph" },
-            "inlines": {
-              "type": "array",
-              "minItems": 1,
-              "items": { "$ref": "#/$defs/InlineNode" }
-            }
-          }
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "content"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "paragraph" },
+        "content": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/InlineNode" }
         }
-      ],
-      "unevaluatedProperties": false
+      }
     },
-    "BlockCode": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type", "code"],
-          "properties": {
-            "type": { "const": "code" },
-            "lang": { "type": "string", "minLength": 1, "maxLength": 32 },
-            "code": { "type": "string" }
-          }
-        }
-      ],
-      "unevaluatedProperties": false
+    "BlockCodeBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "value"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "code_block" },
+        "value": { "type": "string" },
+        "lang": { "type": "string", "minLength": 1, "maxLength": 32 }
+      }
     },
-    "BlockMath": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type", "latex"],
-          "properties": {
-            "type": { "const": "math" },
-            "latex": { "type": "string", "minLength": 1, "maxLength": 65535 }
-          }
-        }
-      ],
-      "unevaluatedProperties": false
+    "BlockMathBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "value"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "math_block" },
+        "value": { "type": "string", "minLength": 1, "maxLength": 65535 }
+      }
     },
     "TableCell": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["inlines"],
+      "required": ["content"],
       "properties": {
-        "inlines": {
+        "content": {
           "type": "array",
           "minItems": 1,
           "items": { "$ref": "#/$defs/InlineNode" }
@@ -301,159 +218,200 @@
       }
     },
     "BlockTable": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type", "rows"],
-          "properties": {
-            "type": { "const": "table" },
-            "caption": {
-              "type": "array",
-              "items": { "$ref": "#/$defs/InlineNode" }
-            },
-            "rows": {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "type": "array",
-                "minItems": 1,
-                "items": { "$ref": "#/$defs/TableCell" }
-              }
-            }
-          }
-        }
-      ],
-      "unevaluatedProperties": false
-    },
-    "BlockImage": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type", "src"],
-          "properties": {
-            "type": { "const": "image" },
-            "src": { "type": "string", "minLength": 1, "format": "uri-reference" },
-            "alt": { "type": "string", "maxLength": 1024 },
-            "caption": {
-              "type": "array",
-              "items": { "$ref": "#/$defs/InlineNode" }
-            }
-          }
-        }
-      ],
-      "unevaluatedProperties": false
-    },
-    "ListItem": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["blocks"],
+      "required": ["id", "type", "rows"],
       "properties": {
-        "checked": { "type": "boolean" },
-        "blocks": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "table" },
+        "caption": { "type": "array", "items": { "$ref": "#/$defs/InlineNode" } },
+        "rows": {
           "type": "array",
           "minItems": 1,
-          "items": { "$ref": "#/$defs/Block" }
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/TableCell" }
+          }
         }
       }
     },
-    "BlockList": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type", "ordered", "items"],
-          "properties": {
-            "type": { "const": "list" },
-            "ordered": { "type": "boolean" },
-            "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/ListItem" } }
-          }
-        }
-      ],
-      "unevaluatedProperties": false
+    "BlockImage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "src"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "image" },
+        "src": { "type": "string", "minLength": 1, "format": "uri-reference" },
+        "alt": { "type": "string", "maxLength": 1024 },
+        "caption": { "type": "array", "items": { "$ref": "#/$defs/InlineNode" } }
+      }
     },
-    "BlockQuote": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type", "blocks"],
-          "properties": {
-            "type": { "const": "quote" },
-            "cite": { "type": "string", "maxLength": 2048 },
-            "blocks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Block" } }
-          }
-        }
-      ],
-      "unevaluatedProperties": false
+    "BlockImagePlaceholder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "anyOf": [{ "required": ["reserve_height_mm"] }, { "required": ["aspect_ratio"] }],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "image_placeholder" },
+        "caption": { "type": "array", "items": { "$ref": "#/$defs/InlineNode" } },
+        "reserve_height_mm": { "type": "number", "exclusiveMinimum": 0, "maximum": 1000 },
+        "aspect_ratio": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
+        "border": { "type": "boolean" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
     },
-    "BlockCallout": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type", "kind", "blocks"],
-          "properties": {
-            "type": { "const": "callout" },
-            "kind": { "type": "string", "enum": ["note", "info", "success", "warning", "error"] },
-            "title": { "type": "array", "items": { "$ref": "#/$defs/InlineNode" } },
-            "blocks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Block" } }
-          }
-        }
-      ],
-      "unevaluatedProperties": false
+    "BlockNote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "content"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "note" },
+        "content": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/InlineNode" } }
+      }
+    },
+    "BlockWarning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "content"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "warning" },
+        "content": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/InlineNode" } }
+      }
+    },
+    "InlineItem": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/InlineNode" }
+    },
+    "BlockBulletList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "items"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "bullet_list" },
+        "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/InlineItem" } }
+      }
+    },
+    "BlockNumberedList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "items"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "numbered_list" },
+        "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/InlineItem" } }
+      }
     },
     "BlockHorizontalRule": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type"],
-          "properties": { "type": { "const": "horizontal_rule" } }
-        }
-      ],
-      "unevaluatedProperties": false
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "horizontal_rule" }
+      }
     },
     "BlockPageBreak": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type"],
-          "properties": { "type": { "const": "page_break" } }
-        }
-      ],
-      "unevaluatedProperties": false
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Identifier" },
+        "type": { "const": "page_break" }
+      }
     },
-    "BlockToc": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
+    "ThemePage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["size", "dpi", "margin_mm"],
+      "properties": {
+        "size": { "type": "string", "enum": ["A4", "Letter"] },
+        "dpi": { "type": "integer", "minimum": 72, "maximum": 1200 },
+        "margin_mm": {
           "type": "object",
-          "required": ["type", "depth"],
+          "additionalProperties": false,
+          "required": ["top", "right", "bottom", "left"],
           "properties": {
-            "type": { "const": "toc" },
-            "depth": { "type": "integer", "minimum": 1, "maximum": 6 }
+            "top": { "type": "number", "minimum": 0, "maximum": 100 },
+            "right": { "type": "number", "minimum": 0, "maximum": 100 },
+            "bottom": { "type": "number", "minimum": 0, "maximum": 100 },
+            "left": { "type": "number", "minimum": 0, "maximum": 100 }
           }
         }
-      ],
-      "unevaluatedProperties": false
+      }
     },
-    "BlockFootnote": {
-      "allOf": [
-        { "$ref": "#/$defs/BlockCommon" },
-        {
-          "type": "object",
-          "required": ["type", "key", "blocks"],
-          "properties": {
-            "type": { "const": "footnote" },
-            "key": { "$ref": "#/$defs/Identifier" },
-            "blocks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Block" } }
-          }
-        }
-      ],
-      "unevaluatedProperties": false
+    "ThemeFonts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base", "mono"],
+      "properties": {
+        "base": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "mono": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "math": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "ThemeText": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base_size_px", "line_height"],
+      "properties": {
+        "base_size_px": { "type": "number", "minimum": 6, "maximum": 72 },
+        "line_height": { "type": "number", "minimum": 1.0, "maximum": 3.0 }
+      }
+    },
+    "ThemeColors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "background", "muted", "accent", "border", "code_bg"],
+      "properties": {
+        "text": { "$ref": "#/$defs/ColorHex" },
+        "background": { "$ref": "#/$defs/ColorHex" },
+        "muted": { "$ref": "#/$defs/ColorHex" },
+        "accent": { "$ref": "#/$defs/ColorHex" },
+        "border": { "$ref": "#/$defs/ColorHex" },
+        "code_bg": { "$ref": "#/$defs/ColorHex" }
+      }
+    },
+    "ThemeHeadings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "h1_size_px": { "type": "number", "minimum": 6, "maximum": 200 },
+        "h2_size_px": { "type": "number", "minimum": 6, "maximum": 200 },
+        "h3_size_px": { "type": "number", "minimum": 6, "maximum": 200 },
+        "h4_size_px": { "type": "number", "minimum": 6, "maximum": 200 }
+      }
+    },
+    "ThemeCode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "font_size_px": { "type": "number", "minimum": 6, "maximum": 72 },
+        "background": { "$ref": "#/$defs/ColorHex" }
+      }
+    },
+    "ThemeTables": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "border_color": { "$ref": "#/$defs/ColorHex" },
+        "header_background": { "$ref": "#/$defs/ColorHex" }
+      }
+    },
+    "ThemeLtrInlineStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "boxed_border_color": { "$ref": "#/$defs/ColorHex" },
+        "boxed_background": { "$ref": "#/$defs/ColorHex" },
+        "mono_background": { "$ref": "#/$defs/ColorHex" }
+      }
     }
   }
 }

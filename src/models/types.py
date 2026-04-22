@@ -29,3 +29,13 @@ ColorHex = Annotated[
     StringConstraints(pattern=r"^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"),
 ]
 
+# RFC3339-ish datetime string for JSON source-of-truth.
+# Example: 2026-04-22T10:00:00Z or 2026-04-22T10:00:00+03:00
+DateTimeStr = Annotated[
+    str,
+    StringConstraints(
+        min_length=20,
+        max_length=40,
+        pattern=r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$",
+    ),
+]
