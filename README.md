@@ -96,15 +96,23 @@ python app.py
 Main UI:
 - Left: Subjects list
 - Middle: Blocks list for the selected subject
-- Right: Dynamic form editor for the selected block
+- Right: `Block Editor` + `JSON Import` workspace tabs
 - Bottom: Status + logs/reports
 
 Required actions are available via the menu:
 - New/Open/Save/Save As
 - Project Settings (edit Meta + Theme)
 - Validate
+- Generate Typst Only
 - Build Preview / Build Strict
-- Open Output Folder / Open Generated Typst / Open Last Build Report
+- Open Output Folder / Open Generated Typst / Open Preview PDF / Open Build Report
+
+JSON-first flow in the `JSON Import` tab:
+- Paste or load raw JSON
+- Validate using the same backend validation pipeline
+- Import into in-memory project state
+- Continue optional manual refinement in the form editor
+- Build preview PDF without requiring an explicit save first
 
 ## Recommended Fonts
 
@@ -125,4 +133,3 @@ The `build/` directory is used for generated and build outputs:
 - `generated_content.typ` (generated)
 - `output.pdf` (Typst output)
 - `build.log` and `build_report.json`
-

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -10,6 +9,7 @@ import customtkinter as ctk
 
 from src.ui.controllers.app_controller import AppController
 from src.ui.forms.block_forms import make_block_form
+from src.ui.forms.json_import_panel import JsonImportPanel
 from src.ui.forms.project_settings import ProjectSettingsDialog
 from src.ui.state import project_state as ps
 from src.ui.widgets.log_panel import LogPanel
@@ -27,6 +27,7 @@ class MainWindow(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=0)
+        self.grid_rowconfigure(2, weight=0)
 
         self._build_menu()
         self._build_layout()
@@ -51,7 +52,8 @@ class MainWindow(ctk.CTk):
         file_m.add_separator()
         file_m.add_command(label="Open Output Folder", command=self._open_output_folder)
         file_m.add_command(label="Open Generated Typst", command=self._open_generated_typst)
-        file_m.add_command(label="Open Last Build Report", command=self._open_last_build_report)
+        file_m.add_command(label="Open Preview PDF", command=self._open_preview_pdf)
+        file_m.add_command(label="Open Build Report", command=self._open_build_report)
         file_m.add_separator()
         file_m.add_command(label="Exit", command=self._on_close)
 
@@ -59,6 +61,7 @@ class MainWindow(ctk.CTk):
         m.add_cascade(label="Actions", menu=act_m)
         act_m.add_command(label="Validate", command=self._validate)
         act_m.add_separator()
+        act_m.add_command(label="Generate Typst Only", command=self._generate_typst_only)
         act_m.add_command(label="Build Preview", command=lambda: self._build("preview"))
         act_m.add_command(label="Build Strict", command=lambda: self._build("strict"))
 
@@ -126,13 +129,43 @@ class MainWindow(ctk.CTk):
         self.editor_panel.grid_columnconfigure(0, weight=1)
         self.editor_panel.grid_rowconfigure(0, weight=1)
 
-        self.editor_placeholder = ctk.CTkLabel(self.editor_panel, text="Select a block to edit.", anchor="center")
+        self.editor_tabs = ctk.CTkTabview(self.editor_panel)
+        self.editor_tabs.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
+        self.editor_tabs.add("Block Editor")
+        self.editor_tabs.add("JSON Import")
+
+        self.block_editor_tab = self.editor_tabs.tab("Block Editor")
+        self.block_editor_tab.grid_columnconfigure(0, weight=1)
+        self.block_editor_tab.grid_rowconfigure(0, weight=1)
+
+        self.json_tab = self.editor_tabs.tab("JSON Import")
+        self.json_tab.grid_columnconfigure(0, weight=1)
+        self.json_tab.grid_rowconfigure(0, weight=1)
+
+        self.editor_placeholder = ctk.CTkLabel(self.block_editor_tab, text="Select a block to edit.", anchor="center")
         self.editor_placeholder.grid(row=0, column=0, sticky="nsew", padx=12, pady=12)
         self.current_form = None
 
+        self.json_import_panel = JsonImportPanel(
+            self.json_tab,
+            on_validate=self._validate_json_input,
+            on_import=self._import_json_input,
+            on_load_file=self._load_json_from_file_into_workspace,
+        )
+        self.json_import_panel.grid(row=0, column=0, sticky="nsew")
+
+        # Build/preview action bar
+        actions = ctk.CTkFrame(self)
+        actions.grid(row=1, column=0, sticky="ew", padx=8, pady=(0, 8))
+        ctk.CTkButton(actions, text="Generate Typst Only", command=self._generate_typst_only).grid(row=0, column=0, padx=(0, 6), pady=8)
+        ctk.CTkButton(actions, text="Build Preview PDF", command=lambda: self._build("preview")).grid(row=0, column=1, padx=(0, 6), pady=8)
+        ctk.CTkButton(actions, text="Open Generated Typst", command=self._open_generated_typst).grid(row=0, column=2, padx=(0, 6), pady=8)
+        ctk.CTkButton(actions, text="Open Preview PDF", command=self._open_preview_pdf).grid(row=0, column=3, padx=(0, 6), pady=8)
+        ctk.CTkButton(actions, text="Open Build Report", command=self._open_build_report).grid(row=0, column=4, pady=8)
+
         # Bottom logs
         self.logs = LogPanel(self)
-        self.logs.grid(row=1, column=0, sticky="ew", padx=8, pady=(0, 8))
+        self.logs.grid(row=2, column=0, sticky="ew", padx=8, pady=(0, 8))
 
     def _update_title(self) -> None:
         path = str(self.controller.path) if self.controller.path else "Untitled"
@@ -202,7 +235,7 @@ class MainWindow(ctk.CTk):
             self.editor_placeholder.grid(row=0, column=0, sticky="nsew", padx=12, pady=12)
             return
         block = ps.get_block(self.controller.project_file, sid, bid)
-        self.current_form = make_block_form(self.editor_panel, block, on_change=self._on_model_changed)
+        self.current_form = make_block_form(self.block_editor_tab, block, on_change=self._on_model_changed)
         self.current_form.grid(row=0, column=0, sticky="nsew", padx=12, pady=12)
 
     def _refresh_all(self) -> None:
@@ -309,6 +342,63 @@ class MainWindow(ctk.CTk):
             self.logs.append(json.dumps(rep.model_dump(), ensure_ascii=False, indent=2))
             self.logs.set_status(f"Validation failed at {rep.stage}")
 
+    def _validate_json_input(self, text: str):
+        rep = self.controller.validate_json_text(text)
+        if rep.ok:
+            self.logs.set_status("JSON workspace validation: passed")
+        else:
+            self.logs.set_status(f"JSON workspace validation failed at {rep.stage}")
+        return rep
+
+    def _import_json_input(self, text: str):
+        rep = self.controller.import_json_text(text)
+        if rep.ok:
+            self._refresh_all()
+            self._update_title()
+            self.logs.clear()
+            self.logs.append("Imported JSON into project state.")
+            self.logs.set_status("JSON imported (unsaved)")
+        else:
+            self.logs.clear()
+            self.logs.append("JSON import failed.")
+            self.logs.append(json.dumps(rep.model_dump(), ensure_ascii=False, indent=2))
+            self.logs.set_status(f"JSON import failed at {rep.stage}")
+        return rep
+
+    def _load_json_from_file_into_workspace(self) -> tuple[str, str] | None:
+        path = filedialog.askopenfilename(
+            title="Load JSON Into Workspace",
+            filetypes=[("JSON", "*.json"), ("All files", "*.*")],
+        )
+        if not path:
+            return None
+        try:
+            text = Path(path).read_text(encoding="utf-8")
+        except Exception as e:
+            messagebox.showerror("Load failed", str(e))
+            return None
+        self.logs.set_status(f"Loaded JSON workspace file: {path}")
+        return (path, text)
+
+    def _generate_typst_only(self) -> None:
+        self.logs.clear()
+        try:
+            rep = self.controller.generate_typst_only()
+        except Exception as e:
+            messagebox.showerror("Generate failed", str(e))
+            return
+
+        if rep.ok:
+            p = self.controller.generated_typst_path()
+            self.logs.append("GENERATE TYPST: OK")
+            self.logs.append(f"Output: {p}")
+            self.logs.set_status("Generated Typst only")
+            return
+
+        self.logs.append("GENERATE TYPST: FAILED")
+        self.logs.append(json.dumps(rep.model_dump(), ensure_ascii=False, indent=2))
+        self.logs.set_status(f"Generate failed at {rep.stage}")
+
     def _build(self, mode: str) -> None:
         self.logs.clear()
         try:
@@ -337,12 +427,22 @@ class MainWindow(ctk.CTk):
         except Exception as e:
             messagebox.showerror("Failed", str(e))
 
-    def _open_last_build_report(self) -> None:
+    def _open_preview_pdf(self) -> None:
         try:
-            p = self.controller.open_last_build_report()
+            p = self.controller.open_preview_pdf()
             self.logs.set_status(f"Opened: {p}")
         except Exception as e:
             messagebox.showerror("Failed", str(e))
+
+    def _open_build_report(self) -> None:
+        try:
+            p = self.controller.open_build_report()
+            self.logs.set_status(f"Opened: {p}")
+        except Exception as e:
+            messagebox.showerror("Failed", str(e))
+
+    def _open_last_build_report(self) -> None:
+        self._open_build_report()
 
     # ---- subject ops
     def _add_subject(self) -> None:

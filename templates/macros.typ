@@ -31,8 +31,8 @@
 }
 
 // Headings / structure
-#let sdre_section(title) = heading(level: 1)[title]
-#let sdre_subsection(title) = heading(level: 2)[title]
+#let sdre_section(title) = heading(level: 1)[#title]
+#let sdre_subsection(title) = heading(level: 2)[#title]
 
 // Paragraph: accept content
 #let sdre_paragraph(content) = content
@@ -41,15 +41,15 @@
 #let sdre_ltr(value, style: "plain", theme: none) = {
   let mono_font = if theme != none { theme.fonts.mono } else { none }
   if style == "mono" {
-    if mono_font != none { text(font: mono_font, dir: ltr)[value] } else { text(dir: ltr)[value] }
+    if mono_font != none { text(font: mono_font, dir: ltr)[#value] } else { text(dir: ltr)[#value] }
   } else if style == "boxed" {
     box(
       inset: (x: 4pt, y: 2pt),
       stroke: 1pt + sdre_color(if theme != none { theme.colors.border } else { "#AAAAAA" }),
       radius: 2pt,
-    )[text(dir: ltr)[value]]
+    )[text(dir: ltr)[#value]]
   } else {
-    text(dir: ltr)[value]
+    text(dir: ltr)[#value]
   }
 }
 
@@ -58,7 +58,9 @@
 #let sdre_inline_math(value) = value
 
 // Blocks: code/math
-#let sdre_code_block(value, lang: none) = raw(value, lang: lang, block: true)
+#let sdre_code_block(value, lang: none) = block(spacing: 0.35em)[
+  #raw(value, lang: lang, block: true)
+]
 #let sdre_math_block(value) = value
 
 // Horizontal rule / page break
@@ -96,34 +98,43 @@
 // Image placeholder: reserved box + optional label/caption.
 #let sdre_image_placeholder(theme: none, reserve_height: none, aspect_ratio: none, border: true, label: none, caption: none) = {
   let h = if reserve_height != none { reserve_height } else { 50mm }
+  let muted_color = sdre_color(if theme != none { theme.colors.muted } else { "#666666" })
   let stroke_val = if border {
     1pt + sdre_color(if theme != none { theme.colors.border } else { "#DDDDDD" })
   } else { none }
 
-  rect(
-    width: 100%,
-    height: h,
-    stroke: stroke_val,
-    radius: 3pt,
-    inset: 8pt,
-    fill: none,
-  )[
-    if label != none { strong(label) }
-    if aspect_ratio != none { text(fill: sdre_color(theme.colors.muted))[ " (" + str(aspect_ratio) + ")" ] }
-  ]
+  block(spacing: 0.35em)[
+    rect(
+      width: 100%,
+      height: h,
+      stroke: stroke_val,
+      radius: 3pt,
+      inset: 8pt,
+      fill: none,
+    )[
+      #if label != none {
+        strong[#label]
+      }
+      #if aspect_ratio != none {
+        v(4pt)
+        text(fill: muted_color)[(ratio: #aspect_ratio)]
+      }
+    ]
 
-  if caption != none {
-    caption
-  }
+    #if caption != none {
+      caption
+    }
+  ]
 }
 
 // Tables: rows is an array of arrays of cell content blocks.
 #let sdre_table(rows, caption: none) = {
-  if caption != none { caption }
-
-  let cols = rows.at(0).len()
-  table(
-    columns: cols,
-    ..rows.flatten(),
-  )
+  block(spacing: 0.35em)[
+    #if caption != none { caption }
+    #let cols = rows.at(0).len()
+    #table(
+      columns: cols,
+      ..rows.flatten(),
+    )
+  ]
 }

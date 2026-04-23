@@ -19,6 +19,8 @@ class ErrorItem(BaseModel):
     )
     message: str = Field(min_length=1, max_length=4096)
     hint: str = Field(default="", max_length=4096)
+    line: int | None = Field(default=None, ge=1)
+    column: int | None = Field(default=None, ge=1)
 
 
 def json_pointer_from_parts(parts: list[Any]) -> str:
@@ -31,4 +33,3 @@ def json_pointer_from_parts(parts: list[Any]) -> str:
         s = s.replace("~", "~0").replace("/", "~1")
         out.append(s)
     return "/" + "/".join(out)
-

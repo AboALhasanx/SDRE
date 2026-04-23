@@ -96,6 +96,10 @@ def new_project_file() -> ProjectFile:
 def load_project_file(path: str | Path) -> ProjectFile:
     path = Path(path)
     data = json.loads(path.read_text(encoding="utf-8"))
+    return load_project_data(data)
+
+
+def load_project_data(data: dict) -> ProjectFile:
     return ProjectFile.model_validate(data)
 
 

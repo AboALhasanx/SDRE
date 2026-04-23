@@ -99,3 +99,11 @@ def test_full_project_generation_from_sample():
     assert "#sdre_code_block(" in typ
     assert "#sdre_table(" in typ
     assert "#sdre_image_placeholder(" in typ
+
+
+def test_macros_interpolate_runtime_values():
+    macros = Path("templates/macros.typ").read_text(encoding="utf-8")
+    assert "heading(level: 1)[#title]" in macros
+    assert "heading(level: 2)[#title]" in macros
+    assert "text(dir: ltr)[#value]" in macros
+    assert "#if label != none" in macros

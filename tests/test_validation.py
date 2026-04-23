@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.validation.engine import validate_project_file
+from src.validation.engine import validate_json_text, validate_project_file
 
 
 def _load_sample() -> dict:
@@ -106,3 +106,13 @@ def test_invalid_inline_node_structure_fails_schema(tmp_path: Path):
     assert report.stage == "schema"
     assert any(e.code == "schema.validation" for e in report.errors)
 
+
+def test_validate_json_text_reports_parse_line_column():
+    report = validate_json_text('{"project": ')
+    assert report.ok is False
+    assert report.stage == "load_json"
+    assert report.errors
+    err = report.errors[0]
+    assert err.code == "json.parse"
+    assert err.line is not None
+    assert err.column is not None

@@ -1,0 +1,310 @@
+{
+  "project": {
+    "meta": {
+      "id": "sdre_full_test",
+      "title": "اختبار شامل لنظام SDRE",
+      "subtitle": "فحص جميع الوظائف والعناصر",
+      "author": "Abo Alhasan",
+      "language": "ar",
+      "direction": "rtl",
+      "version": "1.0.0",
+      "created_at": "2026-04-22T19:39:37.778Z",
+      "updated_at": "2026-04-23T05:30:26.943Z"
+    },
+    "theme": {
+      "page": {
+        "size": "A4",
+        "dpi": 300,
+        "margin_mm": {
+          "top": 18.0,
+          "right": 16.0,
+          "bottom": 18.0,
+          "left": 16.0
+        }
+      },
+      "fonts": {
+        "base": "Amiri",
+        "mono": "JetBrains Mono"
+      },
+      "colors": {
+        "text": "#111111",
+        "background": "#FFFFFF",
+        "muted": "#666666",
+        "accent": "#0B5FFF",
+        "border": "#DDDDDD",
+        "code_bg": "#F6F8FA"
+      },
+      "text": {
+        "base_size_px": 14.0,
+        "line_height": 1.6
+      }
+    },
+    "subjects": [
+      {
+        "id": "subject_3",
+        "title": "اختبار الأخطاء والحالات الخاصة",
+        "description": "هذا الموضوع لاختبار السلوك غير الطبيعي والأخطاء.",
+        "blocks": [
+          {
+            "id": "sec_1",
+            "type": "section",
+            "title": "Section 1"
+          },
+          {
+            "id": "subsection_1",
+            "type": "subsection",
+            "title": "New Subsection"
+          },
+          {
+            "id": "paragraph_1",
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "value": "يهدف هذا النظام إلى بناء مستندات تقنية عربية بطريقة منظمة. تعتمد بعض الخوارزميات مثل"
+              },
+              {
+                "type": "ltr",
+                "value": "Binary Search",
+                "style": "boxed"
+              },
+              {
+                "type": "text",
+                "value": "على بيانات مرتبة، ويكون التعقيد الزمني تقريبًا"
+              },
+              {
+                "type": "inline_math",
+                "value": "O(log n)"
+              },
+              {
+                "type": "text",
+                "value": "، ويمكن تمثيل الشرط البرمجي المختصر بالشكل"
+              },
+              {
+                "type": "inline_code",
+                "value": "if (x < y)",
+                "lang": "cpp"
+              },
+              {
+                "type": "text",
+                "value": "."
+              }
+            ]
+          },
+          {
+            "id": "math_block_1",
+            "type": "math_block",
+            "value": "a^2 + b^2 = c^2"
+          },
+          {
+            "id": "code_block_1",
+            "type": "code_block",
+            "value": "int binarySearch(int arr[], int n, int x) {\n    int low = 0;\n    int high = n - 1;\n\n    while (low <= high) {\n        int mid = (low + high) / 2;\n\n        if (arr[mid] == x) return mid;\n        if (x < arr[mid]) high = mid - 1;\n        else low = mid + 1;\n    }\n\n    return -1;\n}",
+            "lang": "cpp"
+          },
+          {
+            "id": "note_1",
+            "type": "note",
+            "content": [
+              {
+                "type": "text",
+                "value": "يجب أن تكون البيانات مرتبة مسبقًا قبل تطبيق"
+              },
+              {
+                "type": "ltr",
+                "value": "Binary Search",
+                "style": "plain"
+              },
+              {
+                "type": "text",
+                "value": "وإلا ستكون النتيجة غير صحيحة."
+              }
+            ]
+          },
+          {
+            "id": "warning_1",
+            "type": "warning",
+            "content": [
+              {
+                "type": "text",
+                "value": "لا تعتمد على نسخ النصوص التقنية يدويًا داخل العربية بدون تنظيم عناصر"
+              },
+              {
+                "type": "ltr",
+                "value": "LTR",
+                "style": "plain"
+              },
+              {
+                "type": "text",
+                "value": "لأن ذلك قد يسبب خللًا في الاتجاه والإخراج النهائي."
+              }
+            ]
+          },
+          {
+            "id": "horizontal_rule_1",
+            "type": "horizontal_rule"
+          }
+        ]
+      },
+      {
+        "id": "subject_1",
+        "title": "مقدمة واختبار الفقرات",
+        "description": "هذا الموضوع لاختبار النصوص والعناوين والكود والمعادلات.",
+        "blocks": [
+          {
+            "id": "sec_1",
+            "type": "section",
+            "title": "العناصر المركبة"
+          },
+          {
+            "id": "bullet_list_1",
+            "type": "bullet_list",
+            "items": [
+              [
+                {
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              [
+                {
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              [
+                {
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              [
+                {
+                  "type": "text",
+                  "value": ""
+                }
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "subject_2",
+        "title": "New Subject",
+        "blocks": [
+          {
+            "id": "sec_1",
+            "type": "section",
+            "title": "Section 1"
+          },
+          {
+            "id": "p_1",
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "id": "section_1",
+            "type": "section",
+            "title": "New ن"
+          },
+          {
+            "id": "bullet_list_1",
+            "type": "bullet_list",
+            "items": [
+              [
+                {
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              [
+                {
+                  "type": "text",
+                  "value": ""
+                }
+              ]
+            ]
+          },
+          {
+            "id": "numbered_list_1",
+            "type": "numbered_list",
+            "items": [
+              [
+                {
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              [
+                {
+                  "type": "text",
+                  "value": ""
+                }
+              ]
+            ]
+          },
+          {
+            "id": "table_1",
+            "type": "table",
+            "rows": [
+              [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "value": ""
+                    },
+                    {
+                      "type": "text",
+                      "value": "الجانب"
+                    }
+                  ]
+                }
+              ]
+            ],
+            "caption": [
+              {
+                "type": "text",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "id": "image_placeholder_1",
+            "type": "image_placeholder",
+            "caption": [
+              {
+                "type": "text",
+                "value": "سيتم وضع مخطط بنية النظام هنا لاحقًا"
+              }
+            ],
+            "reserve_height_mm": 40.0,
+            "aspect_ratio": 1.0,
+            "border": true,
+            "label": "شكل توضيحي لاحق"
+          },
+          {
+            "id": "page_break_1",
+            "type": "page_break"
+          },
+          {
+            "id": "code_block_1",
+            "type": "code_block",
+            "value": "def greet(name: str) -> str:\n    return f\"Hello, {name}\"",
+            "lang": "python"
+          },
+          {
+            "id": "math_block_1",
+            "type": "math_block",
+            "value": "T(n) = T(n/2) + O(1)"
+          }
+        ]
+      }
+    ]
+  }
+}
