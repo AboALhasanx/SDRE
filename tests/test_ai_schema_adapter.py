@@ -89,3 +89,77 @@ def test_injection_generates_valid_ids_and_defaults():
 
     report = validate_project_data(out, file_label="<ai-sanitized>")
     assert report.ok is True
+
+
+def test_math_normalization_for_inline_math_common_forms():
+    draft = {
+        "project": {
+            "subjects": [
+                {
+                    "title": "Math",
+                    "blocks": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {"type": "inline_math", "value": "O(nlogn)"},
+                                {"type": "inline_math", "value": "O(logn)"},
+                                {"type": "inline_math", "value": "O(n2)"},
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+    }
+    out = sanitize_project_draft(draft)
+    content = out["project"]["subjects"][0]["blocks"][0]["content"]
+    assert content[0]["value"] == "O(n log n)"
+    assert content[1]["value"] == "O(log n)"
+    assert content[2]["value"] == "O(n^2)"
+
+
+def test_math_block_normalization_preserves_equation_fidelity():
+    draft = {
+        "project": {
+            "subjects": [
+                {
+                    "title": "Math",
+                    "blocks": [
+                        {
+                            "type": "math_block",
+                            "value": "T(n)=aT(n/b)+f(n)",
+                        }
+                    ],
+                }
+            ]
+        }
+    }
+    out = sanitize_project_draft(draft)
+    value = out["project"]["subjects"][0]["blocks"][0]["value"]
+    assert value == "T(n) = a T(n / b) + f(n)"
+
+
+def test_math_normalization_keeps_valid_existing_expression_stable():
+    draft = {
+        "project": {
+            "subjects": [
+                {
+                    "title": "Math",
+                    "blocks": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {"type": "inline_math", "value": "O(n log n)"},
+                            ],
+                        },
+                        {"type": "math_block", "value": "T(n) = a T(n / b) + f(n)"},
+                    ],
+                }
+            ]
+        }
+    }
+    out = sanitize_project_draft(draft)
+    blocks = out["project"]["subjects"][0]["blocks"]
+    assert blocks[0]["type"] == "paragraph"
+    assert blocks[0]["content"][0]["value"] == "O(n log n)"
+    assert blocks[1]["value"] == "T(n) = a T(n / b) + f(n)"

@@ -2,93 +2,58 @@
 
 #import "../templates/macros.typ": *
 
-#let meta = (id: "project", title: "معمارية الأنظمة الموزعة وتكامل الذكاء الاصطناعي", author: "AI Assistant", language: "ar", direction: "rtl", version: "1.0.0", created_at: "2026-04-23T15:25:02Z", updated_at: "2026-04-23T15:42:35.565Z")
-#let theme = (page: (size: "A4", dpi: 300, margin_mm: (top: 15.0, right: 15.0, bottom: 15.0, left: 15.0)), fonts: (base: "Arial", mono: "Consolas", math: "STIX Two Math"), colors: (text: "#111111", background: "#FFFFFF", muted: "#666666", accent: "#0B5FFF", border: "#DDDDDD", code_bg: "#F6F8FA"), text: (base_size_px: 14.0, line_height: 1.6), headings: none, code: none, tables: none, ltr_inline_style: (boxed_border_color: "#DDDDDD"))
+#let meta = (id: "Dist_Sys_AI_2026", title: "معمارية الأنظمة الموزعة وتكامل الذكاء الاصطناعي", author: "Abualhasan", language: "ar", direction: "rtl", version: "2.1.0", created_at: "2026-04-23T19:00:00Z", updated_at: "2026-04-23T16:05:31.442Z")
+#let theme = (page: (size: "A4", dpi: 300, margin_mm: (top: 20.0, right: 20.0, bottom: 20.0, left: 20.0)), fonts: (base: "Cairo", mono: "Fira Code", math: "Latin Modern Math"), colors: (text: "#1A1A1A", background: "#FFFFFF", muted: "#666666", accent: "#007ACC", border: "#E0E0E0", code_bg: "#F5F5F5"), text: none, headings: none, code: none, tables: none, ltr_inline_style: none)
 
 #sdre_document(meta, theme)[
-// subject:Web_Evolution title:مقدمة في تطور الويب (Web Evolution)
+// subject:Main_Subject title:هيكلية الأنظمة والذكاء الاصطناعي
 
-// block:paragraph type:paragraph
-#sdre_paragraph([بدأ الويب كصفحات ثابتة، لكننا اليوم نتحدث عن أنظمة موزعة عالمياً (Globally Distributed Systems). التحدي الأكبر هو الحفاظ على زمن استجابة منخفض (Low Latency) مع زيادة عدد المستخدمين المتزامنين.])
+// block:sec_1 type:section
+#sdre_section("1. مقدمة في تطور الويب (Web Evolution)")
 
+// block:p_1 type:paragraph
+#sdre_paragraph([بدأ الويب كصفحات ثابتة، لكننا اليوم نتحدث عن أنظمة موزعة عالمياً. التحدي الأكبر هو الحفاظ على زمن استجابة منخفض مع زيادة عدد المستخدمين المتزامنين.])
 
-// subject:Backend title:دور الأطر البرمجية في الـ Backend
+// block:sec_3 type:section
+#sdre_section("3. تمثيل البيانات باستخدام تنسيق JSON")
 
-// block:paragraph type:paragraph
-#sdre_paragraph([تعتبر أطر العمل مثل Flask و FastAPI حجر الزاوية في بناء الخدمات المصغرة. فهي توفر المرونة اللازمة للتعامل مع الطلبات وتوجيهها نحو قواعد البيانات أو محركات المعالجة الأخرى.])
-
-
-// subject:JSON title:تمثيل البيانات باستخدام تنسيق JSON
-
-// block:paragraph type:paragraph
-#sdre_paragraph([يعتبر الـ JSON هو اللغة العالمية لتبادل البيانات. إليك مثال على هيكلية ملف مشروع في نظامنا:])
-
-// block:code_block type:code_block
+// block:code_json type:code_block
 #sdre_code_block("{
-  \"project_id\": \"sdre_2026_test\",
-  \"metadata\": {
-    \"author\": \"Abualhasan\",
-    \"version\": \"2.1.0\",
-    \"features\": [\"AI_Draft\", \"Sanitizer\", \"Validation\"]
+  \"project\": {
+    \"meta\": {
+      \"id\": \"sdre_2026_test\",
+      \"author\": \"Abualhasan\",
+      \"version\": \"2.1.0\"
+    }
   }
 }", lang: "json")
 
+// block:sec_4 type:section
+#sdre_section("4. التعقيد الحسابي ونظرية الخوارزميات")
 
-// subject:subject title:التعقيد الحسابي ونظرية الخوارزميات
+// block:p_4 type:paragraph
+#sdre_paragraph([عند معالجة النصوص الطويلة، نستخدم مقياس #sdre_inline_math($O(n \log n)$) لتقييم الكفاءة.])
 
-// block:paragraph type:paragraph
-#sdre_paragraph([عند معالجة النصوص الطويلة، يجب أن نهتم بكفاءة الخوارزمية. نستخدم مقياس #sdre_inline_math($O(nlogn)$) لتقييم خوارزميات الفرز والبحث. رياضياً، يمكننا التعبير عن الوقت الكلي للمعالجة بالمعادلة التالية:])
+// block:math_master type:math_block
+#sdre_math_block($T(n) = aT(n/b) + f(n)$)
 
-// block:math_block type:math_block
-#sdre_math_block($x$)
+// block:sec_7 type:section
+#sdre_section("7. إدارة الذاكرة وتحسين الأداء")
 
-// block:paragraph_1 type:paragraph
-#sdre_paragraph([حيث تعبر هذه المعادلة عن تقسيم المهام الكبيرة إلى مهام أصغر (Divide and Conquer).])
-
-
-// subject:subject_1 title:أمن المعلومات والتشفير الرقمي
-
-// block:paragraph type:paragraph
-#sdre_paragraph([لحماية خصوصية المستخدم، نعتمد على خوارزميات التجزئة (Hashing). خوارزمية SHA-256 تضمن عدم إمكانية استرجاع النص الأصلي من الهاش الناتج، مما يجعلها مثالية لتخزين كلمات المرور.])
-
-
-// subject:UI_UX title:واجهات العرض وتجربة المستخدم (UI/UX)
-
-// block:paragraph type:paragraph
-#sdre_paragraph([في نظام الـ SDRE، الواجهة يجب أن تكون سريعة الاستجابة. استخدام الـ Progress Bar ليس مجرد جمالية، بل هو تغذية راجعة ضرورية ليعرف المستخدم أن المعالجة جارية ولم يتوقف النظام.])
-
-
-// subject:subject_2 title:إدارة الذاكرة وتحسين الأداء
-
-// block:paragraph type:paragraph
-#sdre_paragraph([في لغات مثل C++ و Python نستخدم تقنيات مختلفة لإدارة الذاكرة. إليك دالة بسيطة بلغة Python تقوم بمعالجة مصفوفة من البيانات بكفاءة:])
-
-// block:code_block type:code_block
+// block:code_py type:code_block
 #sdre_code_block("def process_chunks(data_list, chunk_size=500):
-    \"\"\"تقسيم البيانات إلى أجزاء ومعالجتها لتقليل استهلاك الذاكرة\"\"\"
     for i in range(0, len(data_list), chunk_size):
-        yield data_list[i:i + chunk_size]
+        yield data_list[i:i + chunk_size]", lang: "python")
 
-# مثال لاستدعاء الدالة
-for chunk in process_chunks(range(10000)):
-    # تنفيذ المعالجة هنا
-    pass", lang: "python")
+// block:sec_9 type:section
+#sdre_section("9. التحديات الحالية في معالجة اللغات الطبيعية")
 
+// block:warn_rtl type:warning
+#sdre_warning([التعامل مع النصوص العربية والإنجليزية المختلطة يتطلب طبقة Sanitizer ذكية لتفادي أخطاء اتجاه النص (RTL/LTR).], theme: theme)
 
-// subject:Horizontal_Scaling title:استراتيجيات التوسع الأفقي (Horizontal Scaling)
+// block:sec_10 type:section
+#sdre_section("10. الخلاصة والرؤية المستقبلية")
 
-// block:paragraph type:paragraph
-#sdre_paragraph([عند وصول النظام إلى أقصى طاقته، نقوم بإضافة خوادم جديدة خلف Load Balancer. هذا يضمن توزيع الحمل بشكل عادل ويمنع سقوط النظام (System Crash).])
-
-
-// subject:subject_3 title:التحديات الحالية في معالجة اللغات الطبيعية
-
-// block:paragraph type:paragraph
-#sdre_paragraph([التعامل مع النصوص العربية والإنجليزية المختلطة يتطلب طبقة Sanitizer ذكية. الموديلات الحالية قد تخطئ في تحديد اتجاه النص (RTL/LTR) إذا لم يتم توجيهها بـ Few-shot examples واضحة.])
-
-
-// subject:subject_4 title:الخلاصة والرؤية المستقبلية
-
-// block:paragraph type:paragraph
-#sdre_paragraph([الانتقال إلى Phase 3 سيعني قدرة النظام على معالجة ملفات كاملة (كتب أو أبحاث) دون القلق من حدود الـ Tokens، بفضل تقنية الـ Chunking and Merging.])
+// block:note_future type:note
+#sdre_note([الانتقال إلى Phase 3 سيعني قدرة النظام على معالجة ملفات كاملة دون القلق من حدود الـ Tokens.], theme: theme)
 ]

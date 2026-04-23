@@ -256,6 +256,7 @@ def test_ai_service_accepts_valid_json_draft():
     assert result.sanitized_payload["project"]["subjects"]
     assert result.attempts == 1
     assert "Heading-like source lines should generally become section/subsection blocks." in client.prompts[0]
+    assert "Preserve displayed equations faithfully" in client.prompts[0]
 
 
 def test_ai_service_classifies_parse_failure_as_technical():
@@ -322,6 +323,62 @@ def test_ai_service_accepts_heading_preservation_via_subject_titles():
     assert result.ok is True
     assert result.failure_class is None
     assert result.semantic_reasons == []
+
+
+def test_ai_service_flags_trivial_math_degradation_for_rich_formula_source():
+    client = _StubClient(
+        [
+            """
+            {
+              "project": {
+                "meta": {"title": "Math"},
+                "subjects": [
+                  {
+                    "title": "Recurrence",
+                    "blocks": [
+                      {"type": "math_block", "value": "x"}
+                    ]
+                  }
+                ]
+              }
+            }
+            """
+        ]
+    )
+    service = AIService(client=client)
+    source = "T(n)=aT(n/b)+f(n)"
+
+    result = service.generate_project_draft(source, max_attempts=1, _force_single_shot=True)
+    assert result.ok is False
+    assert result.failure_class == "semantic"
+    assert any("Displayed equations appear degraded to trivial placeholders." in reason for reason in result.semantic_reasons)
+
+
+def test_ai_service_does_not_flag_math_degradation_when_equation_is_preserved():
+    client = _StubClient(
+        [
+            """
+            {
+              "project": {
+                "meta": {"title": "Math"},
+                "subjects": [
+                  {
+                    "title": "Recurrence",
+                    "blocks": [
+                      {"type": "math_block", "value": "T(n)=aT(n/b)+f(n)"}
+                    ]
+                  }
+                ]
+              }
+            }
+            """
+        ]
+    )
+    service = AIService(client=client)
+    source = "T(n)=aT(n/b)+f(n)"
+
+    result = service.generate_project_draft(source, max_attempts=1, _force_single_shot=True)
+    assert result.ok is True
 
 
 def test_ai_service_retries_with_semantic_prompt_and_recovers():

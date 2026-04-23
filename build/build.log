@@ -1,13 +1,13 @@
 ok=False mode=preview stage=compile
 === stderr ===
-error: unknown variable: nlogn
-   ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\build\generated_content.typ:40:109
+error: unknown variable: og
+   ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\build\generated_content.typ:35:82
    │
-40 │ #sdre_paragraph([عند معالجة النصوص الطويلة، يجب أن نهتم بكفاءة الخوارزمية. نستخدم مقياس #sdre_inline_math($O(nlogn)$) لتقييم خوارزميات الفرز والبحث. رياضياً، يمكننا التعبير عن الوقت الكلي للمعالجة بالمعادلة التالية:])
-   │                                                                                                              ^^^^^
+35 │ #sdre_paragraph([عند معالجة النصوص الطويلة، نستخدم مقياس #sdre_inline_math($O(n \log n)$) لتقييم الكفاءة.])
+   │                                                                                   ^^
    │
-   = hint: if you meant to display multiple letters as is, try adding spaces between each letter: `n l o g n`
-   = hint: or if you meant to display this as text, try placing it in quotes: `"nlogn"`
+   = hint: if you meant to display multiple letters as is, try adding spaces between each letter: `o g`
+   = hint: or if you meant to display this as text, try placing it in quotes: `"og"`
 
 help: error occurred while importing this module
   ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\templates\main.typ:9:9

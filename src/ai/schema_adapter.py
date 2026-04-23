@@ -474,6 +474,7 @@ def _normalize_math_expression(value: str) -> str:
 def _normalize_big_o_forms(expr: str) -> str:
     def _rewrite(match: re.Match[str]) -> str:
         inner = match.group(1).strip()
+        inner = re.sub(r"([A-Za-z0-9\)])log(?=[A-Za-z0-9(])", r"\1 log ", inner)
         inner = re.sub(r"(?i)\blog(?=[A-Za-z0-9])", "log ", inner)
         inner = re.sub(r"\b([A-Za-z])(\d+)\b", r"\1^\2", inner)
         inner = re.sub(r"([A-Za-z0-9\)])(?=log\b)", r"\1 ", inner)
