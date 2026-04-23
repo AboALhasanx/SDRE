@@ -1,11 +1,41 @@
 from __future__ import annotations
 
+import json
+from typing import Any, Iterable
+
+
+def _hint_line(label: str, value: str | None) -> str:
+    clean = (value or "").strip()
+    if clean:
+        return f"{label}: {clean}"
+    return f"{label}: not provided."
+
+
+def _json_snippet(value: Any, *, fallback: str = "null") -> str:
+    try:
+        return json.dumps(value, ensure_ascii=False, indent=2)
+    except Exception:
+        return fallback
+
+
+def _format_error_lines(errors: Iterable[dict[str, str]]) -> str:
+    lines: list[str] = []
+    for item in errors:
+        path = item.get("path", "/")
+        message = item.get("message", "Validation error")
+        hint = item.get("hint", "")
+        if hint:
+            lines.append(f"- path={path} | message={message} | hint={hint}")
+        else:
+            lines.append(f"- path={path} | message={message}")
+    if not lines:
+        return "- path=/ | message=Unknown technical validation failure."
+    return "\n".join(lines)
+
 
 def build_generation_prompt(*, title_hint: str | None = None, author_hint: str | None = None) -> str:
-    title_note = f"Preferred title hint: {title_hint.strip()}" if title_hint and title_hint.strip() else "No title hint provided."
-    author_note = (
-        f"Preferred author hint: {author_hint.strip()}" if author_hint and author_hint.strip() else "No author hint provided."
-    )
+    title_note = _hint_line("Preferred title hint", title_hint)
+    author_note = _hint_line("Preferred author hint", author_hint)
     return f"""
 You are generating an SDRE draft in JSON from raw source text.
 
@@ -43,6 +73,107 @@ Short valid snippets:
   {{"type":"inline_code","value":"x += 1","lang":"python"}}
 - bullet_list:
   {{"type":"bullet_list","items":[[{{"type":"text","value":"First"}}],[{{"type":"text","value":"Second"}}]]}}
+
+Additional context:
+- {title_note}
+- {author_note}
+""".strip()
+
+
+def build_technical_correction_prompt(
+    *,
+    raw_text: str,
+    errors: list[dict[str, str]],
+    previous_json: Any | None = None,
+    fragment_json: Any | None = None,
+    fragment_path: str | None = None,
+    title_hint: str | None = None,
+    author_hint: str | None = None,
+) -> str:
+    title_note = _hint_line("Preferred title hint", title_hint)
+    author_note = _hint_line("Preferred author hint", author_hint)
+    error_lines = _format_error_lines(errors)
+    if fragment_json is not None:
+        fragment_note = f"Target fragment path: {fragment_path or '/'}"
+        return f"""
+You are fixing a technically invalid SDRE JSON fragment.
+
+Return JSON only. No markdown. No commentary.
+Output MUST be one JSON object representing only the corrected fragment (not the whole project).
+Keep the same semantic meaning; fix structure/types only.
+Use only supported SDRE block/inline types and valid field shapes.
+
+Technical errors to fix:
+{error_lines}
+
+{fragment_note}
+Fragment JSON to fix:
+{_json_snippet(fragment_json, fallback="{}")}
+
+Source text (for context only):
+{raw_text}
+
+Additional context:
+- {title_note}
+- {author_note}
+""".strip()
+
+    return f"""
+You are fixing a technically invalid SDRE project JSON.
+
+Return JSON only. No markdown. No commentary.
+Output MUST be one JSON object for the SDRE project draft.
+Keep structure/meaning, but fix schema/model violations.
+Use only supported SDRE block/inline types and valid field shapes.
+
+Technical errors to fix:
+{error_lines}
+
+Previous JSON draft:
+{_json_snippet(previous_json, fallback="{}")}
+
+Source text:
+{raw_text}
+
+Additional context:
+- {title_note}
+- {author_note}
+""".strip()
+
+
+def build_semantic_retry_prompt(
+    *,
+    raw_text: str,
+    semantic_reasons: list[str],
+    previous_json: Any | None = None,
+    title_hint: str | None = None,
+    author_hint: str | None = None,
+) -> str:
+    title_note = _hint_line("Preferred title hint", title_hint)
+    author_note = _hint_line("Preferred author hint", author_hint)
+    reason_lines = "\n".join(f"- {r}" for r in semantic_reasons) or "- Previous output was too sparse."
+    return f"""
+You previously generated an SDRE JSON draft that was technically valid but semantically incomplete.
+
+Regenerate a fuller draft from the same source text.
+Return JSON only. No markdown. No commentary.
+Output must be one SDRE JSON object with practical coverage.
+
+Requirements for this retry:
+1) Preserve major document structure and headings where possible.
+2) Produce sufficient section/subsection and content blocks for the source length.
+3) Avoid collapsing rich text into one tiny paragraph.
+4) Use only supported SDRE block/inline types.
+5) Do not invent IDs/timestamps/complex theme details.
+
+Why previous draft was rejected:
+{reason_lines}
+
+Previous draft (for reference):
+{_json_snippet(previous_json, fallback="{}")}
+
+Source text:
+{raw_text}
 
 Additional context:
 - {title_note}

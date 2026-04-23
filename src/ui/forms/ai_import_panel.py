@@ -132,7 +132,22 @@ class AIImportPanel(ctk.CTkFrame):
         else:
             self._clear_results()
 
-        self.status_var.set(f"AI draft status: {result.stage} | {'ok' if result.ok else 'failed'}")
+        self.status_var.set(self._build_status_line(result))
+
+    def _build_status_line(self, result: AIGenerationResult) -> str:
+        base = f"AI draft: {'ok' if result.ok else 'failed'} | stage={result.stage} | attempts={result.attempts}"
+        if result.ok:
+            if result.attempts > 1:
+                return f"{base} | recovered_after_retry"
+            return base
+
+        if result.failure_class:
+            base += f" | class={result.failure_class}"
+        if result.max_retries_exceeded:
+            base += " | max_retries_exceeded"
+        if result.semantic_reasons:
+            base += f" | semantic={result.semantic_reasons[0]}"
+        return base
 
     def _import_clicked(self) -> None:
         report = self._on_import()

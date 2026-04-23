@@ -2,89 +2,57 @@
 
 #import "../templates/macros.typ": *
 
-#let meta = (id: "sdre_full_test", title: "اختبار شامل لنظام SDRE", author: "Abo Alhasan", language: "ar", direction: "rtl", subtitle: "ملف تجريبي لاختبار جميع العناصر", version: "1.0.0", created_at: "2026-04-22T12:00:00Z", updated_at: "2026-04-23T10:19:37.296Z")
-#let theme = (page: (size: "A4", dpi: 300, margin_mm: (top: 18.0, right: 16.0, bottom: 18.0, left: 16.0)), fonts: (base: "Arial", mono: "JetBrains Mono", math: "STIX Two Math"), colors: (text: "#111111", background: "#FFFFFF", muted: "#666666", accent: "#0B5FFF", border: "#DDDDDD", code_bg: "#F6F8FA"), text: (base_size_px: 14.0, line_height: 1.6), headings: none, code: none, tables: none, ltr_inline_style: (boxed_border_color: "#DDDDDD"))
+#let meta = (id: "Algorithm_Efficiency", title: "تحليل كفاءة الخوارزميات (Algorithm Efficiency)", author: "AI Assistant", language: "ar", direction: "rtl", version: "1.0.0", created_at: "2026-04-23T13:12:09Z", updated_at: "2026-04-23T13:12:17.534Z")
+#let theme = (page: (size: "A4", dpi: 300, margin_mm: (top: 15.0, right: 15.0, bottom: 15.0, left: 15.0)), fonts: (base: "Arial", mono: "Consolas", math: "STIX Two Math"), colors: (text: "#111111", background: "#FFFFFF", muted: "#666666", accent: "#0B5FFF", border: "#DDDDDD", code_bg: "#F6F8FA"), text: (base_size_px: 14.0, line_height: 1.6), headings: none, code: none, tables: none, ltr_inline_style: (boxed_border_color: "#DDDDDD"))
 
 #sdre_document(meta, theme)[
-// subject:subject_intro title:مقدمة واختبار الفقرات
+// subject:Time_Complexity title:مقدمة عن تعقيد الوقت (Time Complexity)
 
-// block:sec_intro type:section
-#sdre_section("مقدمة النظام")
+// block:paragraph type:paragraph
+#sdre_paragraph([في عالم هندسة البرمجيات، لا يكفي أن تعمل الخوارزمية بشكل صحيح، بل يجب أن تكون فعالة. نستخدم مقياس Big O Notation لوصف نمو وقت التنفيذ بالنسبة لحجم البيانات المدخلة n.])
 
-// block:sub_overview type:subsection
-#sdre_subsection("فكرة عامة")
 
-// block:p_intro_1 type:paragraph
-#sdre_paragraph([يهدف هذا النظام إلى بناء مستندات تقنية عربية بطريقة منظمة. تعتمد بعض الخوارزميات مثل #sdre_ltr("Binary Search", theme: theme, style: "boxed") على بيانات مرتبة، ويكون التعقيد الزمني تقريبًا #sdre_inline_math($O(log n)$)، ويمكن تمثيل الشرط البرمجي المختصر بالشكل #sdre_inline_code("if (x < y)").])
+// subject:Mathematical_Representation title:التمثيل الرياضي (Mathematical Representation)
 
-// block:math_pythagoras type:math_block
-#sdre_math_block($a^2 + b^2 = c^2$)
+// block:paragraph type:paragraph
+#sdre_paragraph([إذا كانت لدينا دالة تعبر عن الوقت المستغرق، نرمز لها بالرمز T(n). على سبيل المثال، في خوارزمية البحث الخطي (Linear Search)، يكون التعقيد هو:])
 
-// block:code_binary_search type:code_block
-#sdre_code_block("int binarySearch(int arr[], int n, int x) {
-    int low = 0;
-    int high = n - 1;
+// block:math_block type:math_block
+#sdre_math_block($T(n)=O(n)$)
 
-    while (low <= high) {
-        int mid = (low + high) / 2;
+// block:paragraph_1 type:paragraph
+#sdre_paragraph([أما في حالة الـ Nested Loops، فغالباً ما نصل إلى التعقيد التربيعي O(n2).])
 
-        if (arr[mid] == x) return mid;
-        if (x < arr[mid]) high = mid - 1;
-        else low = mid + 1;
+
+// subject:Code_Implementation title:مثال برمجي (Code Implementation)
+
+// block:paragraph type:paragraph
+#sdre_paragraph([لنلقِ نظرة على هذه الدالة المكتوبة بلغة C++ والتي تقوم بحساب مجموع عناصر مصفوفة (Array Sum):])
+
+// block:code_block type:code_block
+#sdre_code_block("int calculateSum(int arr[], int n) {
+    int sum = 0; // Initialize sum
+    for (int i = 0; i < n; i++) {
+        sum += arr[i];
     }
-
-    return -1;
+    return sum;
 }", lang: "cpp")
 
-// block:note_sorted_data type:note
-#sdre_note([يجب أن تكون البيانات مرتبة مسبقًا قبل تطبيق #sdre_ltr("Binary Search", theme: theme, style: "plain")، وإلا ستكون النتيجة غير صحيحة.], theme: theme)
-
-// block:warning_bidi type:warning
-#sdre_warning([لا تعتمد على نسخ النصوص التقنية يدويًا داخل العربية بدون تنظيم عناصر #sdre_ltr("LTR", theme: theme, style: "mono")، لأن ذلك قد يسبب خللًا في الاتجاه والإخراج النهائي.], theme: theme)
-
-// block:hr_1 type:horizontal_rule
-#sdre_horizontal_rule(theme: theme)
+// block:paragraph_1 type:paragraph
+#sdre_paragraph([في هذا الكود، المتغير sum يتم تحديثه داخل حلقة for واحدة، مما يجعل الخوارزمية تعمل بكفاءة عالية جداً من نوع Linear Time.])
 
 
-// subject:subject_structures title:اختبار الجداول والصور والقوائم
+// subject:Performance_Comparison title:المقارنة بين الأداء (Performance Comparison)
 
-// block:sec_structures type:section
-#sdre_section("العناصر المركبة")
+// block:paragraph type:paragraph
+#sdre_paragraph([هناك عدة أنواع من التعقيد يجب على كل مبرمج معرفتها:])
 
-// block:list_bullets type:bullet_list
-#sdre_bullet_list(([يدعم النظام الفقرات المنظمة.], [يدعم النظام المصطلحات اللاتينية مثل #sdre_ltr("TCP/IP", theme: theme, style: "boxed").], [يدعم النظام المعادلات مثل #sdre_inline_math($E = m c^2$).]))
-
-// block:list_steps type:numbered_list
-#sdre_numbered_list(([تحميل المشروع], [التحقق من البنية], [توليد ملف Typst], [استخراج PDF النهائي]))
-
-// block:table_compare type:table
-#sdre_table((([الجانب], [القيمة]), ([نوع النظام], [#sdre_ltr("Structured Document Engine", theme: theme, style: "plain")]), ([اتجاه النص], [RTL مع دعم #sdre_ltr("LTR", theme: theme, style: "boxed")]), ([الرياضيات], [#sdre_ltr("Native Typst Math", theme: theme, style: "plain")]), ([الإخراج], [#sdre_ltr("PDF", theme: theme, style: "mono")])), caption: [جدول مقارنة بين خصائص النظام])
-
-// block:img_placeholder_arch type:image_placeholder
-#sdre_image_placeholder(theme: theme, reserve_height: 55mm, border: true, label: "شكل توضيحي لاحق", caption: [سيتم وضع مخطط بنية النظام هنا لاحقًا])
-
-// block:pb_1 type:page_break
-#sdre_page_break()
-
-// block:sec_images type:section
-#sdre_section("اختبار الصور")
+// block:bullet_list type:bullet_list
+#sdre_bullet_list(([Constant Time: O(1) - الأسرع دائماً.], [Logarithmic Time: O(logn) - مثل الـ Binary Search.], [Space Complexity: وهو قياس مقدار الذاكرة (Memory Consumption) التي يحتاجها البرنامج أثناء التشغيل.]))
 
 
-// subject:subject_edge_cases title:اختبار الأخطاء والحالات الخاصة
+// subject:subject title:الخلاصة والتوصيات
 
-// block:sec_edge_cases type:section
-#sdre_section("اختبار الحالات الخاصة")
-
-// block:p_edge_1 type:paragraph
-#sdre_paragraph([هذا السطر يختبر وجود #sdre_ltr("HTTP/2", theme: theme, style: "boxed") داخل نص عربي، وكذلك وجود معادلة #sdre_inline_math($E = m c^2$) وكود قصير مثل #sdre_inline_code("x += 1").])
-
-// block:code_python_test type:code_block
-#sdre_code_block("def greet(name: str) -> str:
-    return f\"Hello, {name}\"", lang: "python")
-
-// block:math_complexity type:math_block
-#sdre_math_block($T(n) = T(n/2) + O(1)$)
-
-// block:p_long_test type:paragraph
-#sdre_paragraph([هذا نص عربي طويل جدًا الهدف منه اختبار التفاف الأسطر داخل الفقرة العربية مع وجود عدة عناصر داخلية مثل #sdre_ltr("Binary Search", theme: theme, style: "boxed") و #sdre_ltr("HTTP/2", theme: theme, style: "plain") و #sdre_inline_math($O(log n)$) و #sdre_inline_code("if (x < y)") ضمن نفس الفقرة، مع تكرار الجمل لقياس مدى استقرار الإخراج النهائي وتماسكه بصريًا وعدم حصول تشوهات في الاتجاه أو المسافات أو ترتيب العناصر عند البناء إلى PDF.])
+// block:paragraph type:paragraph
+#sdre_paragraph([عند بناء أي Backend System باستخدام Flask أو غيرها، يجب الانتباه إلى أن استهلاك المعالج (CPU Usage) يزداد طردياً مع سوء اختيار الخوارزمية. دائماً ابحث عن O(nlogn) بدلاً من O(n2) لتحسين تجربة المستخدم.])
 ]

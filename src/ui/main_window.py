@@ -437,10 +437,24 @@ class MainWindow(ctk.CTk):
         result = self.controller.generate_ai_draft(raw_text, title_hint=title, author_hint=author)
         self.logs.clear()
         if result.ok:
-            self.logs.append("AI draft generated and validated.")
+            if result.attempts > 1:
+                self.logs.append(f"AI draft generated and validated after {result.attempts} attempts.")
+            else:
+                self.logs.append("AI draft generated and validated.")
+            if result.semantic_score is not None:
+                self.logs.append(f"Semantic score: {result.semantic_score}")
             self.logs.set_status("AI draft ready for import")
         else:
             self.logs.append(f"AI draft failed at stage: {result.stage}")
+            if result.failure_class:
+                self.logs.append(f"Failure class: {result.failure_class}")
+            self.logs.append(f"Attempts: {result.attempts}")
+            if result.max_retries_exceeded:
+                self.logs.append("Max retries exceeded.")
+            if result.semantic_reasons:
+                self.logs.append("Semantic issues:")
+                for reason in result.semantic_reasons:
+                    self.logs.append(f"- {reason}")
             if result.validation_report is not None:
                 self.logs.append(json.dumps(result.validation_report.model_dump(), ensure_ascii=False, indent=2))
             elif result.message:
