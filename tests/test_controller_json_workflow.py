@@ -13,7 +13,7 @@ def test_import_json_text_success_marks_dirty():
     rep = c.import_json_text(raw)
     assert rep.ok is True
     assert c.dirty is True
-    assert c.project_file.project.meta.id == "sdre_demo"
+    assert c.project_file.project.meta.id == "sdre_full_test"
 
 
 def test_import_json_text_failure_does_not_modify_state():
@@ -44,15 +44,16 @@ def test_build_uses_snapshot_source_when_unsaved(tmp_path: Path, monkeypatch: py
 
     captured: dict[str, str] = {}
 
-    def _fake_build_pdf(*, source_file, mode):
+    def _fake_build_pdf(*, source_file, mode, output_pdf_path=None, output_report_path=None, output_generated_path=None):
         captured["source_file"] = str(source_file)
+        captured["output_pdf_path"] = str(output_pdf_path) if output_pdf_path is not None else ""
         return BuildReport(
             ok=True,
             mode=mode,
             source_file=str(source_file),
             generated_typst_file=str(tmp_path / "generated_content.typ"),
             template_file="templates/main.typ",
-            output_pdf=str(tmp_path / "output.pdf"),
+            output_pdf=str(output_pdf_path or (tmp_path / "output.pdf")),
             stage="ok",
             stdout="",
             stderr="",
@@ -65,5 +66,39 @@ def test_build_uses_snapshot_source_when_unsaved(tmp_path: Path, monkeypatch: py
     assert rep.ok is True
     assert Path(captured["source_file"]).name == "_ui_snapshot.json"
     assert Path(captured["source_file"]).exists()
+    assert Path(captured["output_pdf_path"]).parent == tmp_path
     data = json.loads(Path(captured["source_file"]).read_text(encoding="utf-8"))
     assert "project" in data
+
+
+def test_output_path_resolution_auto_and_custom(tmp_path: Path):
+    c = AppController()
+    c.project_file.project.meta.id = "my_project"
+    c.set_output_dir(tmp_path)
+
+    c.set_use_auto_name(True)
+    auto = c.resolve_output_paths()["output_pdf"]
+    assert auto.parent == tmp_path
+    assert auto.suffix.lower() == ".pdf"
+    assert auto.name.startswith("my_project_")
+
+    c.set_use_auto_name(False)
+    c.set_custom_filename("custom_report")
+    custom = c.resolve_output_paths()["output_pdf"]
+    assert custom == tmp_path / "custom_report.pdf"
+
+    c.set_custom_filename("already.pdf")
+    custom_with_ext = c.resolve_output_paths()["output_pdf"]
+    assert custom_with_ext == tmp_path / "already.pdf"
+
+
+def test_reset_output_settings_restores_defaults(tmp_path: Path):
+    c = AppController()
+    c.set_output_dir(tmp_path)
+    c.set_custom_filename("manual")
+    c.set_use_auto_name(False)
+
+    c.reset_output_settings()
+    assert c.output_dir is None
+    assert c.custom_filename == ""
+    assert c.use_auto_name is True

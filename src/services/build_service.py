@@ -110,6 +110,9 @@ def build_pdf(
     *,
     source_file: str | Path,
     mode: Mode = "strict",
+    output_pdf_path: str | Path | None = None,
+    output_report_path: str | Path | None = None,
+    output_generated_path: str | Path | None = None,
 ) -> BuildReport:
     p = _paths()
     source_file = Path(source_file)
@@ -120,10 +123,11 @@ def build_pdf(
     def mark(name: str) -> None:
         timings[name] = int((time.perf_counter() - t0) * 1000)
 
-    generated = p["generated"]
+    generated = Path(output_generated_path) if output_generated_path is not None else p["generated"]
     template_main = p["template_main"]
     template_macros = p["template_macros"]
-    out_pdf = p["output_pdf"]
+    out_pdf = Path(output_pdf_path) if output_pdf_path is not None else p["output_pdf"]
+    report_path = Path(output_report_path) if output_report_path is not None else p["report"]
 
     # Stage: load JSON
     stage = "load_json"
@@ -141,7 +145,7 @@ def build_pdf(
             errors=load_errors,
             timings_ms=timings,
         )
-        _write_report(p["report"], rep)
+        _write_report(report_path, rep)
         _write_log(p["log"], rep)
         return rep
 
@@ -164,7 +168,7 @@ def build_pdf(
             errors=schema_errors,
             timings_ms=timings,
         )
-        _write_report(p["report"], rep)
+        _write_report(report_path, rep)
         _write_log(p["log"], rep)
         return rep
 
@@ -182,7 +186,7 @@ def build_pdf(
             errors=instance_errors,
             timings_ms=timings,
         )
-        _write_report(p["report"], rep)
+        _write_report(report_path, rep)
         _write_log(p["log"], rep)
         return rep
 
@@ -212,7 +216,7 @@ def build_pdf(
             errors=(instance_errors + model_errors),
             timings_ms=timings,
         )
-        _write_report(p["report"], rep)
+        _write_report(report_path, rep)
         _write_log(p["log"], rep)
         return rep
 
@@ -250,7 +254,7 @@ def build_pdf(
             errors=gen_errors,
             timings_ms=timings,
         )
-        _write_report(p["report"], rep)
+        _write_report(report_path, rep)
         _write_log(p["log"], rep)
         return rep
     if gen_errors and mode == "preview":
@@ -266,7 +270,7 @@ def build_pdf(
             errors=(instance_errors + model_errors + gen_errors),
             timings_ms=timings,
         )
-        _write_report(p["report"], rep)
+        _write_report(report_path, rep)
         _write_log(p["log"], rep)
         return rep
 
@@ -293,7 +297,7 @@ def build_pdf(
             errors=tpl_errors,
             timings_ms=timings,
         )
-        _write_report(p["report"], rep)
+        _write_report(report_path, rep)
         _write_log(p["log"], rep)
         return rep
     if tpl_errors and mode == "preview":
@@ -308,7 +312,7 @@ def build_pdf(
             errors=(instance_errors + model_errors + gen_errors + tpl_errors),
             timings_ms=timings,
         )
-        _write_report(p["report"], rep)
+        _write_report(report_path, rep)
         _write_log(p["log"], rep)
         return rep
 
@@ -336,12 +340,13 @@ def build_pdf(
             errors=(instance_errors + model_errors + gen_errors + tpl_errors + typst_errors),
             timings_ms=timings,
         )
-        _write_report(p["report"], rep)
+        _write_report(report_path, rep)
         _write_log(p["log"], rep)
         return rep
 
     # Stage: compile
     stage = "compile"
+    out_pdf.parent.mkdir(parents=True, exist_ok=True)
     compile_start = time.perf_counter()
     res: TypstResult = compile_to_pdf(
         typst_bin=typst_bin,
@@ -379,7 +384,7 @@ def build_pdf(
         errors=(instance_errors + model_errors + gen_errors + tpl_errors + typst_errors + compile_errors),
         timings_ms=timings,
     )
-    _write_report(p["report"], rep)
+    _write_report(report_path, rep)
     _write_log(p["log"], rep)
     return rep
 

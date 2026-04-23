@@ -115,3 +115,34 @@ def test_successful_build_path_with_mocked_typst(temp_repo, monkeypatch: pytest.
     assert (build_dir / "output.pdf").exists()
     assert (build_dir / "build_report.json").exists()
     assert (build_dir / "build.log").exists()
+
+
+def test_build_supports_custom_output_pdf_and_report_paths(temp_repo, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(bs, "find_typst", lambda: "typst")
+
+    def _fake_compile_to_pdf(*, typst_bin, main_typ, out_pdf, cwd, root, timeout_s=60):
+        out_pdf.parent.mkdir(parents=True, exist_ok=True)
+        out_pdf.write_bytes(b"%PDF-1.4\n%custom\n")
+        return TypstResult(
+            ok=True,
+            returncode=0,
+            stdout="ok",
+            stderr="",
+            cmd=[typst_bin, "compile", "--root", str(root), str(main_typ), str(out_pdf)],
+        )
+
+    monkeypatch.setattr(bs, "compile_to_pdf", _fake_compile_to_pdf)
+
+    custom_pdf = temp_repo["root"] / "exports" / "my_result.pdf"
+    custom_report = temp_repo["root"] / "reports" / "custom_build_report.json"
+
+    report = bs.build_pdf(
+        source_file="examples/sample_project.json",
+        mode="strict",
+        output_pdf_path=custom_pdf,
+        output_report_path=custom_report,
+    )
+    assert report.ok is True
+    assert Path(report.output_pdf) == custom_pdf
+    assert custom_pdf.exists()
+    assert custom_report.exists()

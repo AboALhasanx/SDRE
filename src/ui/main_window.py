@@ -157,11 +157,32 @@ class MainWindow(ctk.CTk):
         # Build/preview action bar
         actions = ctk.CTkFrame(self)
         actions.grid(row=1, column=0, sticky="ew", padx=8, pady=(0, 8))
-        ctk.CTkButton(actions, text="Generate Typst Only", command=self._generate_typst_only).grid(row=0, column=0, padx=(0, 6), pady=8)
-        ctk.CTkButton(actions, text="Build Preview PDF", command=lambda: self._build("preview")).grid(row=0, column=1, padx=(0, 6), pady=8)
-        ctk.CTkButton(actions, text="Open Generated Typst", command=self._open_generated_typst).grid(row=0, column=2, padx=(0, 6), pady=8)
-        ctk.CTkButton(actions, text="Open Preview PDF", command=self._open_preview_pdf).grid(row=0, column=3, padx=(0, 6), pady=8)
-        ctk.CTkButton(actions, text="Open Build Report", command=self._open_build_report).grid(row=0, column=4, pady=8)
+        actions.grid_columnconfigure(1, weight=1)
+        actions.grid_columnconfigure(3, weight=1)
+
+        self.output_dir_var = ctk.StringVar(value=self.controller.get_output_dir_display())
+        self.output_name_var = ctk.StringVar(value=self.controller.custom_filename)
+        self.auto_name_var = tk.BooleanVar(value=self.controller.use_auto_name)
+
+        ctk.CTkLabel(actions, text="Output directory").grid(row=0, column=0, padx=(8, 6), pady=(8, 4), sticky="w")
+        self.output_dir_entry = ctk.CTkEntry(actions, textvariable=self.output_dir_var)
+        self.output_dir_entry.grid(row=0, column=1, padx=(0, 6), pady=(8, 4), sticky="ew")
+        ctk.CTkButton(actions, text="Browse...", width=95, command=self._browse_output_dir).grid(row=0, column=2, padx=(0, 8), pady=(8, 4))
+
+        ctk.CTkLabel(actions, text="File name").grid(row=0, column=3, padx=(0, 6), pady=(8, 4), sticky="w")
+        self.output_name_entry = ctk.CTkEntry(actions, textvariable=self.output_name_var, width=240)
+        self.output_name_entry.grid(row=0, column=4, padx=(0, 6), pady=(8, 4), sticky="ew")
+        self.auto_name_check = ctk.CTkCheckBox(actions, text="Auto name", variable=self.auto_name_var, command=self._on_auto_name_toggled)
+        self.auto_name_check.grid(row=0, column=5, padx=(0, 6), pady=(8, 4), sticky="w")
+        ctk.CTkButton(actions, text="Reset", width=80, command=self._reset_output_settings).grid(row=0, column=6, padx=(0, 8), pady=(8, 4))
+
+        ctk.CTkButton(actions, text="Generate Typst Only", command=self._generate_typst_only).grid(row=1, column=0, padx=(8, 6), pady=(4, 8), sticky="w")
+        ctk.CTkButton(actions, text="Build Preview PDF", command=lambda: self._build("preview")).grid(row=1, column=1, padx=(0, 6), pady=(4, 8), sticky="w")
+        ctk.CTkButton(actions, text="Build Strict PDF", command=lambda: self._build("strict")).grid(row=1, column=2, padx=(0, 8), pady=(4, 8), sticky="w")
+        ctk.CTkButton(actions, text="Open Generated Typst", command=self._open_generated_typst).grid(row=1, column=3, padx=(0, 6), pady=(4, 8), sticky="w")
+        ctk.CTkButton(actions, text="Open Preview PDF", command=self._open_preview_pdf).grid(row=1, column=4, padx=(0, 6), pady=(4, 8), sticky="w")
+        ctk.CTkButton(actions, text="Open Build Report", command=self._open_build_report).grid(row=1, column=5, padx=(0, 8), pady=(4, 8), sticky="w")
+        self._sync_output_controls()
 
         # Bottom logs
         self.logs = LogPanel(self)
@@ -260,6 +281,40 @@ class MainWindow(ctk.CTk):
         self._update_title()
         self._refresh_blocks()
         self.logs.set_status("Edited (unsaved)")
+
+    # ---- output settings
+    def _sync_output_controls(self) -> None:
+        self.output_dir_var.set(self.controller.get_output_dir_display())
+        self.output_name_var.set(self.controller.custom_filename)
+        self.auto_name_var.set(self.controller.use_auto_name)
+        entry_state = "disabled" if self.controller.use_auto_name else "normal"
+        self.output_name_entry.configure(state=entry_state)
+
+    def _pull_output_settings_from_ui(self) -> None:
+        self.controller.set_output_dir(self.output_dir_var.get())
+        self.controller.set_custom_filename(self.output_name_var.get())
+        self.controller.set_use_auto_name(bool(self.auto_name_var.get()))
+        entry_state = "disabled" if self.controller.use_auto_name else "normal"
+        self.output_name_entry.configure(state=entry_state)
+
+    def _browse_output_dir(self) -> None:
+        current_dir = self.output_dir_var.get().strip() or str(self.controller.get_default_output_dir())
+        selected = filedialog.askdirectory(title="Select Output Directory", initialdir=current_dir)
+        if not selected:
+            return
+        self.output_dir_var.set(selected)
+        self.controller.set_output_dir(selected)
+        self.logs.set_status(f"Output directory set: {selected}")
+
+    def _on_auto_name_toggled(self) -> None:
+        self.controller.set_use_auto_name(bool(self.auto_name_var.get()))
+        entry_state = "disabled" if self.controller.use_auto_name else "normal"
+        self.output_name_entry.configure(state=entry_state)
+
+    def _reset_output_settings(self) -> None:
+        self.controller.reset_output_settings()
+        self._sync_output_controls()
+        self.logs.set_status("Output settings reset to default")
 
     # ---- file actions
     def _new_project(self) -> None:
@@ -402,6 +457,7 @@ class MainWindow(ctk.CTk):
     def _build(self, mode: str) -> None:
         self.logs.clear()
         try:
+            self._pull_output_settings_from_ui()
             rep = self.controller.build(mode)
         except Exception as e:
             messagebox.showerror("Build failed", str(e))
@@ -415,6 +471,7 @@ class MainWindow(ctk.CTk):
 
     def _open_output_folder(self) -> None:
         try:
+            self._pull_output_settings_from_ui()
             p = self.controller.open_output_folder()
             self.logs.set_status(f"Opened output folder: {p}")
         except Exception as e:

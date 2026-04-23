@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+from datetime import datetime
 from pathlib import Path
 
 from src.generator.engine import generate_content
@@ -26,6 +28,10 @@ class AppController:
         self.dirty = False
         self.last_validation: ValidationReport | None = None
         self.last_build: BuildReport | None = None
+        self.output_dir: Path | None = None
+        self.custom_filename: str = ""
+        self.use_auto_name: bool = True
+        self.last_output_pdf_path: Path | None = None
 
     @staticmethod
     def _repo_root() -> Path:
@@ -33,6 +39,70 @@ class AppController:
 
     def _build_dir(self) -> Path:
         return self._repo_root() / "build"
+
+    @staticmethod
+    def _sanitize_filename_stem(raw: str) -> str:
+        name = raw.strip()
+        name = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "_", name)
+        name = re.sub(r"\s+", "_", name)
+        name = re.sub(r"_+", "_", name)
+        return name.strip("._ ")
+
+    def _default_output_stem(self) -> str:
+        meta = self.project_file.project.meta
+        for candidate in (meta.id, meta.title):
+            safe = self._sanitize_filename_stem(candidate or "")
+            if safe:
+                return safe
+        return "output"
+
+    def _auto_output_filename(self) -> str:
+        ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        return f"{self._default_output_stem()}_{ts}.pdf"
+
+    def get_default_output_dir(self) -> Path:
+        return self._build_dir()
+
+    def get_output_dir_display(self) -> str:
+        return str(self.output_dir if self.output_dir is not None else self.get_default_output_dir())
+
+    def set_output_dir(self, value: str | Path | None) -> None:
+        if value is None:
+            self.output_dir = None
+            return
+        as_text = str(value).strip()
+        if not as_text:
+            self.output_dir = None
+            return
+        p = Path(as_text).expanduser()
+        self.output_dir = p
+
+    def set_custom_filename(self, value: str) -> None:
+        self.custom_filename = value.strip()
+
+    def set_use_auto_name(self, value: bool) -> None:
+        self.use_auto_name = bool(value)
+
+    def reset_output_settings(self) -> None:
+        self.output_dir = None
+        self.custom_filename = ""
+        self.use_auto_name = True
+
+    def resolve_output_paths(self) -> dict[str, Path]:
+        output_dir = self.output_dir if self.output_dir is not None else self.get_default_output_dir()
+        output_dir = output_dir.expanduser()
+        if self.use_auto_name:
+            filename = self._auto_output_filename()
+        else:
+            raw = Path(self.custom_filename).name if self.custom_filename else ""
+            if raw.lower().endswith(".pdf"):
+                raw = raw[:-4]
+            stem = self._sanitize_filename_stem(raw)
+            if not stem:
+                stem = self._default_output_stem()
+            filename = f"{stem}.pdf"
+
+        return {"output_pdf": output_dir / filename}
 
     def _active_file_label(self) -> str:
         if self.path is not None:
@@ -125,19 +195,27 @@ class AppController:
 
     def build(self, mode: str) -> BuildReport:
         source_file = self._pipeline_source_file()
-        rep = build_pdf(source_file=source_file, mode=mode)  # type: ignore[arg-type]
+        output_paths = self.resolve_output_paths()
+        output_pdf = output_paths["output_pdf"]
+        rep = build_pdf(source_file=source_file, mode=mode, output_pdf_path=output_pdf)  # type: ignore[arg-type]
         self.last_build = rep
+        self.last_output_pdf_path = output_pdf
         return rep
 
     def open_output_folder(self) -> Path:
-        build_dir = self._build_dir()
-        os.startfile(str(build_dir))  # Windows
-        return build_dir
+        output_dir = self.output_dir if self.output_dir is not None else self._build_dir()
+        output_dir.mkdir(parents=True, exist_ok=True)
+        os.startfile(str(output_dir))  # Windows
+        return output_dir
 
     def generated_typst_path(self) -> Path:
         return self._build_dir() / "generated_content.typ"
 
     def preview_pdf_path(self) -> Path:
+        if self.last_build is not None and self.last_build.output_pdf:
+            return Path(self.last_build.output_pdf)
+        if self.last_output_pdf_path is not None:
+            return self.last_output_pdf_path
         return self._build_dir() / "output.pdf"
 
     def build_report_path(self) -> Path:
