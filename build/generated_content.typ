@@ -2,7 +2,7 @@
 
 #import "../templates/macros.typ": *
 
-#let meta = (id: "sdre_full_test", title: "اختبار شامل لنظام SDRE", author: "Abo Alhasan", language: "ar", direction: "rtl", subtitle: "ملف تجريبي لاختبار جميع العناصر", version: "1.0.0", created_at: "2026-04-22T12:00:00Z", updated_at: "2026-04-23T07:27:43.214Z")
+#let meta = (id: "sdre_full_test", title: "اختبار شامل لنظام SDRE", author: "Abo Alhasan", language: "ar", direction: "rtl", subtitle: "ملف تجريبي لاختبار جميع العناصر", version: "1.0.0", created_at: "2026-04-22T12:00:00Z", updated_at: "2026-04-23T07:51:36.094Z")
 #let theme = (page: (size: "A4", dpi: 300, margin_mm: (top: 18.0, right: 16.0, bottom: 18.0, left: 16.0)), fonts: (base: "Arial", mono: "JetBrains Mono", math: "STIX Two Math"), colors: (text: "#111111", background: "#FFFFFF", muted: "#666666", accent: "#0B5FFF", border: "#DDDDDD", code_bg: "#F6F8FA"), text: (base_size_px: 14.0, line_height: 1.6), headings: none, code: none, tables: none, ltr_inline_style: (boxed_border_color: "#DDDDDD"))
 
 #sdre_document(meta, theme)[

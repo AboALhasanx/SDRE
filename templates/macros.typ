@@ -36,9 +36,8 @@
 #let sdre_mono_font(theme) = if theme != none and theme.fonts.mono != none {
   theme.fonts.mono
 } else {
-  "Courier New"
+  "Consolas"
 }
-
 // --------------------------------------
 // Document shell
 // --------------------------------------
