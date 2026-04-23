@@ -1,4 +1,4 @@
-ok=True mode=preview stage=ok
+ok=False mode=strict stage=compile
 === stderr ===
 warning: variable fonts are not currently supported and may render incorrectly
    ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\templates\macros.typ:85:15
@@ -7,3 +7,8 @@ warning: variable fonts are not currently supported and may render incorrectly
    │                ^^^^^^^^^
    │
    = hint: try installing a static version of "jetbrains mono" instead
+
+error: failed to write PDF file (The process cannot access the file because it is being used by another process. (os error 32))
+=== errors ===
+typst.compile_failed error /: Typst compile failed with exit code 1.
+  hint: See stderr for Typst diagnostics.

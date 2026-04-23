@@ -1,22 +1,32 @@
 {
-  "ok": true,
-  "mode": "preview",
+  "ok": false,
+  "mode": "strict",
   "source_file": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\_ui_snapshot.json",
   "generated_typst_file": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\generated_content.typ",
   "template_file": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\templates\\main.typ",
   "output_pdf": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\output.pdf",
-  "stage": "ok",
+  "stage": "compile",
   "stdout": "",
-  "stderr": "warning: variable fonts are not currently supported and may render incorrectly\n   ┌─ \\\\?\\C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\templates\\macros.typ:85:15\n   │\n85 │     text(font: mono_font, dir: ltr)[#value]\n   │                ^^^^^^^^^\n   │\n   = hint: try installing a static version of \"jetbrains mono\" instead\n\n",
-  "errors": [],
+  "stderr": "warning: variable fonts are not currently supported and may render incorrectly\n   ┌─ \\\\?\\C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\templates\\macros.typ:85:15\n   │\n85 │     text(font: mono_font, dir: ltr)[#value]\n   │                ^^^^^^^^^\n   │\n   = hint: try installing a static version of \"jetbrains mono\" instead\n\nerror: failed to write PDF file (The process cannot access the file because it is being used by another process. (os error 32))\n\n",
+  "errors": [
+    {
+      "code": "typst.compile_failed",
+      "severity": "error",
+      "path": "/",
+      "message": "Typst compile failed with exit code 1.",
+      "hint": "See stderr for Typst diagnostics.",
+      "line": null,
+      "column": null
+    }
+  ],
   "timings_ms": {
-    "load_json": 12,
-    "schema": 237,
-    "model": 237,
-    "generate": 239,
-    "templates": 239,
-    "typst": 250,
-    "compile_ms": 203,
-    "compile": 453
+    "load_json": 78,
+    "schema": 342,
+    "model": 343,
+    "generate": 344,
+    "templates": 344,
+    "typst": 356,
+    "compile_ms": 392,
+    "compile": 749
   }
 }

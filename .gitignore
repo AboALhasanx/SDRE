@@ -29,5 +29,6 @@ Thumbs.db
 .vscode/
 .idea/
 
-# output of SDRE
-build/
+# build logs
+build.log
+build_report.json
