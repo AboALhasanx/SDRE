@@ -2,38 +2,89 @@
 
 #import "../templates/macros.typ": *
 
-#let meta = (id: "sdre_demo", title: "SDRE Sample Project", author: "SDRE", language: "ar", direction: "rtl", subtitle: "Phase 1 Revised Example", version: "0.1", created_at: "2026-04-22T10:00:00Z", updated_at: "2026-04-22T10:00:00Z")
-#let theme = (page: (size: "A4", dpi: 300, margin_mm: (top: 15.0, right: 15.0, bottom: 15.0, left: 15.0)), fonts: (base: "Noto Sans Arabic", mono: "JetBrains Mono", math: "STIX Two Math"), colors: (text: "#111111", background: "#FFFFFF", muted: "#666666", accent: "#0B5FFF", border: "#DDDDDD", code_bg: "#F6F8FA"), text: (base_size_px: 14.0, line_height: 1.6), headings: none, code: none, tables: none, ltr_inline_style: (boxed_border_color: "#DDDDDD"))
+#let meta = (id: "sdre_full_test", title: "اختبار شامل لنظام SDRE", author: "Abo Alhasan", language: "ar", direction: "rtl", subtitle: "ملف تجريبي لاختبار جميع العناصر", version: "1.0.0", created_at: "2026-04-22T12:00:00Z", updated_at: "2026-04-23T07:27:43.214Z")
+#let theme = (page: (size: "A4", dpi: 300, margin_mm: (top: 18.0, right: 16.0, bottom: 18.0, left: 16.0)), fonts: (base: "Arial", mono: "JetBrains Mono", math: "STIX Two Math"), colors: (text: "#111111", background: "#FFFFFF", muted: "#666666", accent: "#0B5FFF", border: "#DDDDDD", code_bg: "#F6F8FA"), text: (base_size_px: 14.0, line_height: 1.6), headings: none, code: none, tables: none, ltr_inline_style: (boxed_border_color: "#DDDDDD"))
 
 #sdre_document(meta, theme)[
-// subject:subject_1 title:البحث الثنائي
+// subject:subject_intro title:مقدمة واختبار الفقرات
 
-// block:sec_1 type:section
-#sdre_section("مقدمة")
+// block:sec_intro type:section
+#sdre_section("مقدمة النظام")
 
-// block:p_1 type:paragraph
-#sdre_paragraph([تُستخدم #sdre_ltr("Binary Search", theme: theme, style: "boxed") داخل البيانات المرتبة بتعقيد #sdre_inline_math($O(log n)$).])
+// block:sub_overview type:subsection
+#sdre_subsection("فكرة عامة")
 
-// block:code_1 type:code_block
-#sdre_code_block("def binary_search(a, x):
-    lo, hi = 0, len(a) - 1
-    while lo <= hi:
-        mid = (lo + hi) // 2
-        if a[mid] == x:
-            return mid
-        if a[mid] < x:
-            lo = mid + 1
-        else:
-            hi = mid - 1
-    return -1
-", lang: "python")
+// block:p_intro_1 type:paragraph
+#sdre_paragraph([يهدف هذا النظام إلى بناء مستندات تقنية عربية بطريقة منظمة. تعتمد بعض الخوارزميات مثل #sdre_ltr("Binary Search", theme: theme, style: "boxed") على بيانات مرتبة، ويكون التعقيد الزمني تقريبًا #sdre_inline_math($O(log n)$)، ويمكن تمثيل الشرط البرمجي المختصر بالشكل #sdre_inline_code("if (x < y)").])
 
-// block:tbl_1 type:table
-#sdre_table((([n], [الزمن]), ([1024], [#sdre_inline_math($O(log n)$)])), caption: [مثال جدول بسيط])
+// block:math_pythagoras type:math_block
+#sdre_math_block($a^2 + b^2 = c^2$)
 
-// block:imgph_1 type:image_placeholder
-#sdre_image_placeholder(theme: theme, reserve_height: 40mm, border: true, label: "Figure 1", caption: [مكان مخصص للصورة لاحقًا.])
+// block:code_binary_search type:code_block
+#sdre_code_block("int binarySearch(int arr[], int n, int x) {
+    int low = 0;
+    int high = n - 1;
+
+    while (low <= high) {
+        int mid = (low + high) / 2;
+
+        if (arr[mid] == x) return mid;
+        if (x < arr[mid]) high = mid - 1;
+        else low = mid + 1;
+    }
+
+    return -1;
+}", lang: "cpp")
+
+// block:note_sorted_data type:note
+#sdre_note([يجب أن تكون البيانات مرتبة مسبقًا قبل تطبيق #sdre_ltr("Binary Search", theme: theme, style: "plain")، وإلا ستكون النتيجة غير صحيحة.], theme: theme)
+
+// block:warning_bidi type:warning
+#sdre_warning([لا تعتمد على نسخ النصوص التقنية يدويًا داخل العربية بدون تنظيم عناصر #sdre_ltr("LTR", theme: theme, style: "mono")، لأن ذلك قد يسبب خللًا في الاتجاه والإخراج النهائي.], theme: theme)
+
+// block:hr_1 type:horizontal_rule
+#sdre_horizontal_rule(theme: theme)
+
+
+// subject:subject_structures title:اختبار الجداول والصور والقوائم
+
+// block:sec_structures type:section
+#sdre_section("العناصر المركبة")
+
+// block:list_bullets type:bullet_list
+#sdre_bullet_list(([يدعم النظام الفقرات المنظمة.], [يدعم النظام المصطلحات اللاتينية مثل #sdre_ltr("TCP/IP", theme: theme, style: "boxed").], [يدعم النظام المعادلات مثل #sdre_inline_math($E = m c^2$).]))
+
+// block:list_steps type:numbered_list
+#sdre_numbered_list(([تحميل المشروع], [التحقق من البنية], [توليد ملف Typst], [استخراج PDF النهائي]))
+
+// block:table_compare type:table
+#sdre_table((([الجانب], [القيمة]), ([نوع النظام], [#sdre_ltr("Structured Document Engine", theme: theme, style: "plain")]), ([اتجاه النص], [RTL مع دعم #sdre_ltr("LTR", theme: theme, style: "boxed")]), ([الرياضيات], [#sdre_ltr("Native Typst Math", theme: theme, style: "plain")]), ([الإخراج], [#sdre_ltr("PDF", theme: theme, style: "mono")])), caption: [جدول مقارنة بين خصائص النظام])
+
+// block:img_placeholder_arch type:image_placeholder
+#sdre_image_placeholder(theme: theme, reserve_height: 55mm, border: true, label: "شكل توضيحي لاحق", caption: [سيتم وضع مخطط بنية النظام هنا لاحقًا])
 
 // block:pb_1 type:page_break
 #sdre_page_break()
+
+// block:sec_images type:section
+#sdre_section("اختبار الصور")
+
+
+// subject:subject_edge_cases title:اختبار الأخطاء والحالات الخاصة
+
+// block:sec_edge_cases type:section
+#sdre_section("اختبار الحالات الخاصة")
+
+// block:p_edge_1 type:paragraph
+#sdre_paragraph([هذا السطر يختبر وجود #sdre_ltr("HTTP/2", theme: theme, style: "boxed") داخل نص عربي، وكذلك وجود معادلة #sdre_inline_math($E = m c^2$) وكود قصير مثل #sdre_inline_code("x += 1").])
+
+// block:code_python_test type:code_block
+#sdre_code_block("def greet(name: str) -> str:
+    return f\"Hello, {name}\"", lang: "python")
+
+// block:math_complexity type:math_block
+#sdre_math_block($T(n) = T(n/2) + O(1)$)
+
+// block:p_long_test type:paragraph
+#sdre_paragraph([هذا نص عربي طويل جدًا الهدف منه اختبار التفاف الأسطر داخل الفقرة العربية مع وجود عدة عناصر داخلية مثل #sdre_ltr("Binary Search", theme: theme, style: "boxed") و #sdre_ltr("HTTP/2", theme: theme, style: "plain") و #sdre_inline_math($O(log n)$) و #sdre_inline_code("if (x < y)") ضمن نفس الفقرة، مع تكرار الجمل لقياس مدى استقرار الإخراج النهائي وتماسكه بصريًا وعدم حصول تشوهات في الاتجاه أو المسافات أو ترتيب العناصر عند البناء إلى PDF.])
 ]

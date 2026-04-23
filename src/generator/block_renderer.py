@@ -27,6 +27,18 @@ def _fmt_num(n: float) -> str:
     return str(n)
 
 
+def _normalize_code_value(value: str) -> str:
+    # Keep real line breaks as-is; if the payload is a single escaped line,
+    # normalize common escaped newline sequences into actual newlines.
+    if "\n" in value or "\r" in value:
+        return value.replace("\r\n", "\n").replace("\r", "\n")
+    if "\\r\\n" in value:
+        value = value.replace("\\r\\n", "\n")
+    if "\\n" in value:
+        value = value.replace("\\n", "\n")
+    return value
+
+
 def _render_inline_item(item: list) -> str:
     return f"[{render_inlines(item)}]"
 
@@ -48,8 +60,9 @@ def render_block(block: Block) -> str:
         return header + f"#sdre_paragraph([{render_inlines(block.content)}])\n"
 
     if isinstance(block, BlockCodeBlock):
+        code_value = _normalize_code_value(block.value)
         lang_arg = f', lang: "{_escape_typst_string(block.lang)}"' if block.lang else ""
-        return header + f'#sdre_code_block("{_escape_typst_string(block.value)}"{lang_arg})\n'
+        return header + f'#sdre_code_block("{_escape_typst_string(code_value)}"{lang_arg})\n'
 
     if isinstance(block, BlockMathBlock):
         return header + f"#sdre_math_block(${block.value}$)\n"

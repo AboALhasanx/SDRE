@@ -1,23 +1,32 @@
 {
   "project": {
     "meta": {
-      "id": "sdre_demo",
-      "title": "SDRE Sample Project",
-      "subtitle": "Phase 1 Revised Example",
-      "author": "SDRE",
+      "id": "sdre_full_test",
+      "title": "اختبار شامل لنظام SDRE",
+      "subtitle": "ملف تجريبي لاختبار جميع العناصر",
+      "author": "Abo Alhasan",
       "language": "ar",
       "direction": "rtl",
-      "version": "0.1",
-      "created_at": "2026-04-22T10:00:00Z",
-      "updated_at": "2026-04-22T10:00:00Z"
+      "version": "1.0.0",
+      "created_at": "2026-04-22T12:00:00Z",
+      "updated_at": "2026-04-22T12:00:00Z"
     },
     "theme": {
       "page": {
         "size": "A4",
         "dpi": 300,
-        "margin_mm": { "top": 15, "right": 15, "bottom": 15, "left": 15 }
+        "margin_mm": {
+          "top": 18,
+          "right": 16,
+          "bottom": 18,
+          "left": 16
+        }
       },
-      "fonts": { "base": "Noto Sans Arabic", "mono": "JetBrains Mono", "math": "STIX Two Math" },
+      "fonts": {
+        "base": "Arial",
+        "mono": "JetBrains Mono",
+        "math": "STIX Two Math"
+      },
       "colors": {
         "text": "#111111",
         "background": "#FFFFFF",
@@ -26,60 +35,437 @@
         "border": "#DDDDDD",
         "code_bg": "#F6F8FA"
       },
-      "text": { "base_size_px": 14, "line_height": 1.6 },
-      "ltr_inline_style": { "boxed_border_color": "#DDDDDD" }
+      "text": {
+        "base_size_px": 14,
+        "line_height": 1.6
+      },
+      "ltr_inline_style": {
+        "boxed_border_color": "#DDDDDD"
+      }
     },
     "subjects": [
       {
-        "id": "subject_1",
-        "title": "البحث الثنائي",
-        "description": "موضوع واحد لاختبار الرندرة الجزئية.",
+        "id": "subject_intro",
+        "title": "مقدمة واختبار الفقرات",
+        "description": "هذا الموضوع لاختبار النصوص والعناوين والكود والمعادلات.",
         "blocks": [
-          { "id": "sec_1", "type": "section", "title": "مقدمة" },
           {
-            "id": "p_1",
+            "id": "sec_intro",
+            "type": "section",
+            "title": "مقدمة النظام"
+          },
+          {
+            "id": "sub_overview",
+            "type": "subsection",
+            "title": "فكرة عامة"
+          },
+          {
+            "id": "p_intro_1",
             "type": "paragraph",
             "content": [
-              { "type": "text", "value": "تُستخدم " },
-              { "type": "ltr", "value": "Binary Search", "style": "boxed" },
-              { "type": "text", "value": " داخل البيانات المرتبة بتعقيد " },
-              { "type": "inline_math", "value": "O(log n)" },
-              { "type": "text", "value": "." }
+              {
+                "type": "text",
+                "value": "يهدف هذا النظام إلى بناء مستندات تقنية عربية بطريقة منظمة. تعتمد بعض الخوارزميات مثل "
+              },
+              {
+                "type": "ltr",
+                "value": "Binary Search",
+                "style": "boxed"
+              },
+              {
+                "type": "text",
+                "value": " على بيانات مرتبة، ويكون التعقيد الزمني تقريبًا "
+              },
+              {
+                "type": "inline_math",
+                "value": "O(log n)"
+              },
+              {
+                "type": "text",
+                "value": "، ويمكن تمثيل الشرط البرمجي المختصر بالشكل "
+              },
+              {
+                "type": "inline_code",
+                "value": "if (x < y)"
+              },
+              {
+                "type": "text",
+                "value": "."
+              }
             ]
           },
           {
-            "id": "code_1",
-            "type": "code_block",
-            "lang": "python",
-            "value": "def binary_search(a, x):\n    lo, hi = 0, len(a) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if a[mid] == x:\n            return mid\n        if a[mid] < x:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n"
+            "id": "math_pythagoras",
+            "type": "math_block",
+            "value": "a^2 + b^2 = c^2"
           },
           {
-            "id": "tbl_1",
-            "type": "table",
-            "caption": [{ "type": "text", "value": "مثال جدول بسيط" }],
-            "rows": [
+            "id": "code_binary_search",
+            "type": "code_block",
+            "lang": "cpp",
+            "value": "int binarySearch(int arr[], int n, int x) {\n    int low = 0;\n    int high = n - 1;\n\n    while (low <= high) {\n        int mid = (low + high) / 2;\n\n        if (arr[mid] == x) return mid;\n        if (x < arr[mid]) high = mid - 1;\n        else low = mid + 1;\n    }\n\n    return -1;\n}"
+          },
+          {
+            "id": "note_sorted_data",
+            "type": "note",
+            "content": [
+              {
+                "type": "text",
+                "value": "يجب أن تكون البيانات مرتبة مسبقًا قبل تطبيق "
+              },
+              {
+                "type": "ltr",
+                "value": "Binary Search",
+                "style": "plain"
+              },
+              {
+                "type": "text",
+                "value": "، وإلا ستكون النتيجة غير صحيحة."
+              }
+            ]
+          },
+          {
+            "id": "warning_bidi",
+            "type": "warning",
+            "content": [
+              {
+                "type": "text",
+                "value": "لا تعتمد على نسخ النصوص التقنية يدويًا داخل العربية بدون تنظيم عناصر "
+              },
+              {
+                "type": "ltr",
+                "value": "LTR",
+                "style": "mono"
+              },
+              {
+                "type": "text",
+                "value": "، لأن ذلك قد يسبب خللًا في الاتجاه والإخراج النهائي."
+              }
+            ]
+          },
+          {
+            "id": "hr_1",
+            "type": "horizontal_rule"
+          }
+        ]
+      },
+      {
+        "id": "subject_structures",
+        "title": "اختبار الجداول والصور والقوائم",
+        "description": "هذا الموضوع لاختبار العناصر المركبة.",
+        "blocks": [
+          {
+            "id": "sec_structures",
+            "type": "section",
+            "title": "العناصر المركبة"
+          },
+          {
+            "id": "list_bullets",
+            "type": "bullet_list",
+            "items": [
               [
-                { "content": [{ "type": "text", "value": "n" }] },
-                { "content": [{ "type": "text", "value": "الزمن" }] }
+                {
+                  "type": "text",
+                  "value": "يدعم النظام الفقرات المنظمة."
+                }
               ],
               [
-                { "content": [{ "type": "text", "value": "1024" }] },
-                { "content": [{ "type": "inline_math", "value": "O(log n)" }] }
+                {
+                  "type": "text",
+                  "value": "يدعم النظام المصطلحات اللاتينية مثل "
+                },
+                {
+                  "type": "ltr",
+                  "value": "TCP/IP",
+                  "style": "boxed"
+                },
+                {
+                  "type": "text",
+                  "value": "."
+                }
+              ],
+              [
+                {
+                  "type": "text",
+                  "value": "يدعم النظام المعادلات مثل "
+                },
+                {
+                  "type": "inline_math",
+                  "value": "E = m c^2"
+                },
+                {
+                  "type": "text",
+                  "value": "."
+                }
               ]
             ]
           },
           {
-            "id": "imgph_1",
-            "type": "image_placeholder",
-            "label": "Figure 1",
-            "border": true,
-            "reserve_height_mm": 40,
-            "caption": [{ "type": "text", "value": "مكان مخصص للصورة لاحقًا." }]
+            "id": "list_steps",
+            "type": "numbered_list",
+            "items": [
+              [
+                {
+                  "type": "text",
+                  "value": "تحميل المشروع"
+                }
+              ],
+              [
+                {
+                  "type": "text",
+                  "value": "التحقق من البنية"
+                }
+              ],
+              [
+                {
+                  "type": "text",
+                  "value": "توليد ملف Typst"
+                }
+              ],
+              [
+                {
+                  "type": "text",
+                  "value": "استخراج PDF النهائي"
+                }
+              ]
+            ]
           },
-          { "id": "pb_1", "type": "page_break" }
+          {
+            "id": "table_compare",
+            "type": "table",
+            "caption": [
+              {
+                "type": "text",
+                "value": "جدول مقارنة بين خصائص النظام"
+              }
+            ],
+            "rows": [
+              [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "value": "الجانب"
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "value": "القيمة"
+                    }
+                  ]
+                }
+              ],
+              [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "value": "نوع النظام"
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "ltr",
+                      "value": "Structured Document Engine",
+                      "style": "plain"
+                    }
+                  ]
+                }
+              ],
+              [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "value": "اتجاه النص"
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "value": "RTL مع دعم "
+                    },
+                    {
+                      "type": "ltr",
+                      "value": "LTR",
+                      "style": "boxed"
+                    }
+                  ]
+                }
+              ],
+              [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "value": "الرياضيات"
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "ltr",
+                      "value": "Native Typst Math",
+                      "style": "plain"
+                    }
+                  ]
+                }
+              ],
+              [
+                {
+                  "content": [
+                    {
+                      "type": "text",
+                      "value": "الإخراج"
+                    }
+                  ]
+                },
+                {
+                  "content": [
+                    {
+                      "type": "ltr",
+                      "value": "PDF",
+                      "style": "mono"
+                    }
+                  ]
+                }
+              ]
+            ]
+          },
+          {
+            "id": "img_placeholder_arch",
+            "type": "image_placeholder",
+            "label": "شكل توضيحي لاحق",
+            "border": true,
+            "reserve_height_mm": 55,
+            "caption": [
+              {
+                "type": "text",
+                "value": "سيتم وضع مخطط بنية النظام هنا لاحقًا"
+              }
+            ]
+          },
+          {
+            "id": "pb_1",
+            "type": "page_break"
+          },
+          {
+            "id": "sec_images",
+            "type": "section",
+            "title": "اختبار الصور"
+          }
+        ]
+      },
+      {
+        "id": "subject_edge_cases",
+        "title": "اختبار الأخطاء والحالات الخاصة",
+        "description": "هذا الموضوع لاختبار السلوك غير الطبيعي والأخطاء.",
+        "blocks": [
+          {
+            "id": "sec_edge_cases",
+            "type": "section",
+            "title": "اختبار الحالات الخاصة"
+          },
+          {
+            "id": "p_edge_1",
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "value": "هذا السطر يختبر وجود "
+              },
+              {
+                "type": "ltr",
+                "value": "HTTP/2",
+                "style": "boxed"
+              },
+              {
+                "type": "text",
+                "value": " داخل نص عربي، وكذلك وجود معادلة "
+              },
+              {
+                "type": "inline_math",
+                "value": "E = m c^2"
+              },
+              {
+                "type": "text",
+                "value": " وكود قصير مثل "
+              },
+              {
+                "type": "inline_code",
+                "value": "x += 1"
+              },
+              {
+                "type": "text",
+                "value": "."
+              }
+            ]
+          },
+          {
+            "id": "code_python_test",
+            "type": "code_block",
+            "lang": "python",
+            "value": "def greet(name: str) -> str:\n    return f\"Hello, {name}\""
+          },
+          {
+            "id": "math_complexity",
+            "type": "math_block",
+            "value": "T(n) = T(n/2) + O(1)"
+          },
+          {
+            "id": "p_long_test",
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "value": "هذا نص عربي طويل جدًا الهدف منه اختبار التفاف الأسطر داخل الفقرة العربية مع وجود عدة عناصر داخلية مثل "
+              },
+              {
+                "type": "ltr",
+                "value": "Binary Search",
+                "style": "boxed"
+              },
+              {
+                "type": "text",
+                "value": " و "
+              },
+              {
+                "type": "ltr",
+                "value": "HTTP/2",
+                "style": "plain"
+              },
+              {
+                "type": "text",
+                "value": " و "
+              },
+              {
+                "type": "inline_math",
+                "value": "O(log n)"
+              },
+              {
+                "type": "text",
+                "value": " و "
+              },
+              {
+                "type": "inline_code",
+                "value": "if (x < y)"
+              },
+              {
+                "type": "text",
+                "value": " ضمن نفس الفقرة، مع تكرار الجمل لقياس مدى استقرار الإخراج النهائي وتماسكه بصريًا وعدم حصول تشوهات في الاتجاه أو المسافات أو ترتيب العناصر عند البناء إلى PDF."
+              }
+            ]
+          }
         ]
       }
     ]
   }
 }
-

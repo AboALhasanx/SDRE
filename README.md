@@ -116,10 +116,12 @@ JSON-first flow in the `JSON Import` tab:
 
 ## Recommended Fonts
 
-Typst will warn if a font family isn’t installed. Recommended:
-- Arabic base font: `Noto Sans Arabic`
+Typst will warn if a font family isn’t installed. Current sample defaults to:
+- Base font: `Arial` (widely available, Arabic-friendly fallback)
 - Monospace: `JetBrains Mono` or `Consolas`
 - Math: `STIX Two Math`
+
+If you prefer `Noto Sans Arabic`, install it locally and set `project.theme.fonts.base` accordingly.
 
 ## Known Limitations (MVP)
 

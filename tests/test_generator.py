@@ -51,6 +51,18 @@ def test_code_block_rendering():
     assert 'lang: "python"' in out
 
 
+def test_code_block_rendering_normalizes_escaped_newlines():
+    b = BlockCodeBlock(
+        id="c2",
+        type="code_block",
+        value="line1\\nline2\\nline3",
+        lang="python",
+    )
+    out = render_block(b)
+    assert "\\\\n" not in out
+    assert "line1\nline2\nline3" in out
+
+
 def test_math_block_rendering():
     b = BlockMathBlock(id="m1", type="math_block", value="a + b")
     out = render_block(b)
@@ -105,5 +117,7 @@ def test_macros_interpolate_runtime_values():
     macros = Path("templates/macros.typ").read_text(encoding="utf-8")
     assert "heading(level: 1)[#title]" in macros
     assert "heading(level: 2)[#title]" in macros
-    assert "text(dir: ltr)[#value]" in macros
-    assert "#if label != none" in macros
+    assert "box(" in macros
+    assert "#text(dir: ltr)[#value]" in macros
+    assert "#rect(" in macros
+    assert "strong[#label]" in macros

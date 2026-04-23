@@ -1,7 +1,9 @@
-ok=True mode=strict stage=ok
+ok=True mode=preview stage=ok
 === stderr ===
-warning: unknown font family: noto sans arabic
-   ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\templates\macros.typ:20:10
+warning: variable fonts are not currently supported and may render incorrectly
+   ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\templates\macros.typ:86:15
    │
-20 │     font: theme.fonts.base,
-   │           ^^^^^^^^^^^^^^^^
+86 │     text(font: mono_font, dir: ltr)[#value]
+   │                ^^^^^^^^^
+   │
+   = hint: try installing a static version of "jetbrains mono" instead
