@@ -1,13 +1,13 @@
 ok=False mode=preview stage=compile
 === stderr ===
-error: unknown variable: aT
-   ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\build\generated_content.typ:43:23
+error: unknown variable: nlogn
+   ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\build\generated_content.typ:40:109
    │
-43 │ #sdre_math_block($T(n)=aT(n/b)+f(n)$)
-   │                        ^^
+40 │ #sdre_paragraph([عند معالجة النصوص الطويلة، يجب أن نهتم بكفاءة الخوارزمية. نستخدم مقياس #sdre_inline_math($O(nlogn)$) لتقييم خوارزميات الفرز والبحث. رياضياً، يمكننا التعبير عن الوقت الكلي للمعالجة بالمعادلة التالية:])
+   │                                                                                                              ^^^^^
    │
-   = hint: if you meant to display multiple letters as is, try adding spaces between each letter: `a T`
-   = hint: or if you meant to display this as text, try placing it in quotes: `"aT"`
+   = hint: if you meant to display multiple letters as is, try adding spaces between each letter: `n l o g n`
+   = hint: or if you meant to display this as text, try placing it in quotes: `"nlogn"`
 
 help: error occurred while importing this module
   ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\templates\main.typ:9:9

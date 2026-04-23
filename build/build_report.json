@@ -4,10 +4,10 @@
   "source_file": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\_ui_snapshot.json",
   "generated_typst_file": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\generated_content.typ",
   "template_file": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\templates\\main.typ",
-  "output_pdf": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\project_2026-04-23_17-38-06.pdf",
+  "output_pdf": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\project_2026-04-23_18-43-23.pdf",
   "stage": "compile",
   "stdout": "",
-  "stderr": "error: unknown variable: aT\n   ┌─ \\\\?\\C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\generated_content.typ:43:23\n   │\n43 │ #sdre_math_block($T(n)=aT(n/b)+f(n)$)\n   │                        ^^\n   │\n   = hint: if you meant to display multiple letters as is, try adding spaces between each letter: `a T`\n   = hint: or if you meant to display this as text, try placing it in quotes: `\"aT\"`\n\nhelp: error occurred while importing this module\n  ┌─ \\\\?\\C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\templates\\main.typ:9:9\n  │\n9 │ #include \"../build/generated_content.typ\"\n  │          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+  "stderr": "error: unknown variable: nlogn\n   ┌─ \\\\?\\C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\generated_content.typ:40:109\n   │\n40 │ #sdre_paragraph([عند معالجة النصوص الطويلة، يجب أن نهتم بكفاءة الخوارزمية. نستخدم مقياس #sdre_inline_math($O(nlogn)$) لتقييم خوارزميات الفرز والبحث. رياضياً، يمكننا التعبير عن الوقت الكلي للمعالجة بالمعادلة التالية:])\n   │                                                                                                              ^^^^^\n   │\n   = hint: if you meant to display multiple letters as is, try adding spaces between each letter: `n l o g n`\n   = hint: or if you meant to display this as text, try placing it in quotes: `\"nlogn\"`\n\nhelp: error occurred while importing this module\n  ┌─ \\\\?\\C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\templates\\main.typ:9:9\n  │\n9 │ #include \"../build/generated_content.typ\"\n  │          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
   "errors": [
     {
       "code": "typst.compile_failed",
@@ -20,13 +20,13 @@
     }
   ],
   "timings_ms": {
-    "load_json": 17,
-    "schema": 202,
-    "model": 202,
-    "generate": 203,
-    "templates": 204,
-    "typst": 215,
-    "compile_ms": 173,
-    "compile": 388
+    "load_json": 52,
+    "schema": 264,
+    "model": 265,
+    "generate": 266,
+    "templates": 266,
+    "typst": 277,
+    "compile_ms": 149,
+    "compile": 427
   }
 }

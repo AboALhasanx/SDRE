@@ -782,10 +782,11 @@ def _assess_semantic_completeness(raw_text: str, payload: dict[str, Any]) -> Sem
     text_length = len(text)
     heading_candidates = _extract_heading_like_lines(text)
     heading_lines = len(heading_candidates)
-    subjects = payload.get("project", {}).get("subjects", [])
+    subjects_raw = payload.get("project", {}).get("subjects", [])
+    subjects = subjects_raw if isinstance(subjects_raw, list) else []
 
     blocks = []
-    for subject in subjects if isinstance(subjects, list) else []:
+    for subject in subjects:
         subject_blocks = subject.get("blocks") if isinstance(subject, dict) else None
         if isinstance(subject_blocks, list):
             blocks.extend(subject_blocks)
@@ -793,6 +794,8 @@ def _assess_semantic_completeness(raw_text: str, payload: dict[str, Any]) -> Sem
     block_count = len(blocks)
     section_count = 0
     non_trivial_blocks = 0
+    section_titles: list[str] = []
+    math_block_values: list[str] = []
 
     for block in blocks:
         if not isinstance(block, dict):
@@ -800,8 +803,20 @@ def _assess_semantic_completeness(raw_text: str, payload: dict[str, Any]) -> Sem
         block_type = block.get("type")
         if block_type in {"section", "subsection"}:
             section_count += 1
+            section_title = str(block.get("title") or "").strip()
+            if section_title:
+                section_titles.append(section_title)
+        if block_type == "math_block":
+            math_block_values.append(str(block.get("value") or "").strip())
         if _is_non_trivial_block(block):
             non_trivial_blocks += 1
+
+    subject_titles = _extract_subject_titles(subjects)
+    heading_match_count = _count_preserved_headings(
+        source_headings=heading_candidates,
+        generated_headings=section_titles + subject_titles,
+    )
+    structural_heading_count = section_count + len(subject_titles)
 
     expected_blocks = _expected_block_count(text_length, heading_lines)
     reasons: list[str] = []
@@ -813,14 +828,14 @@ def _assess_semantic_completeness(raw_text: str, payload: dict[str, Any]) -> Sem
         score -= min(45.0, (expected_blocks - block_count) * 8.0)
 
     if heading_lines >= 2:
-        heading_coverage_ratio = section_count / heading_lines if heading_lines else 1.0
+        heading_coverage_ratio = heading_match_count / heading_lines if heading_lines else 1.0
         min_heading_blocks = max(2, min(heading_lines, 6))
         required_headings = max(2, min_heading_blocks // 2 + min_heading_blocks % 2)
-        if section_count < required_headings or heading_coverage_ratio < 0.5:
+        if heading_match_count < required_headings or heading_coverage_ratio < 0.5:
             heading_under_preserved = True
             reasons.append("Explicit headings were under-preserved.")
             reasons.append("Source text appears structured, but generated section/subsection coverage is too low.")
-            score -= max(18.0, min(35.0, (required_headings - section_count) * 9.0))
+            score -= max(18.0, min(35.0, (required_headings - heading_match_count) * 9.0))
     else:
         heading_coverage_ratio = 1.0
 
@@ -832,6 +847,12 @@ def _assess_semantic_completeness(raw_text: str, payload: dict[str, Any]) -> Sem
         reasons.append("Large source text produced too little substantive content.")
         score -= 20.0
 
+    if _has_rich_source_formula(text) and math_block_values:
+        trivial_count = sum(1 for value in math_block_values if _is_trivial_math_placeholder(value))
+        if trivial_count == len(math_block_values):
+            reasons.append("Displayed equations appear degraded to trivial placeholders.")
+            score -= 20.0
+
     score = max(0.0, round(score, 2))
     return SemanticAssessment(
         ok=len(reasons) == 0,
@@ -839,7 +860,7 @@ def _assess_semantic_completeness(raw_text: str, payload: dict[str, Any]) -> Sem
         reasons=reasons,
         heading_under_preserved=heading_under_preserved,
         source_heading_count=heading_lines,
-        generated_heading_count=section_count,
+        generated_heading_count=structural_heading_count,
         heading_coverage_ratio=round(heading_coverage_ratio, 3),
     )
 
@@ -862,6 +883,81 @@ def _expected_block_count(text_length: int, heading_count: int) -> int:
 
 def _count_heading_like_lines(text: str) -> int:
     return len(_extract_heading_like_lines(text))
+
+
+def _has_rich_source_formula(text: str) -> bool:
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if len(line) > 180:
+            continue
+        if "=" not in line:
+            continue
+        if re.search(r"[+\-*/^]", line) and re.search(r"[A-Za-z]\s*\(", line):
+            return True
+        if re.search(r"\bO\s*\(", line):
+            return True
+    return False
+
+
+def _is_trivial_math_placeholder(value: str) -> bool:
+    token = value.strip()
+    if not token:
+        return True
+    return bool(re.fullmatch(r"[A-Za-z]", token))
+
+
+def _extract_subject_titles(subjects: list[Any]) -> list[str]:
+    out: list[str] = []
+    for subject in subjects:
+        if not isinstance(subject, dict):
+            continue
+        title = str(subject.get("title") or "").strip()
+        if title:
+            out.append(title)
+    return out
+
+
+def _count_preserved_headings(source_headings: list[str], generated_headings: list[str]) -> int:
+    if not source_headings:
+        return 0
+    normalized_generated = {_normalize_heading_text(h) for h in generated_headings if _normalize_heading_text(h)}
+    if not normalized_generated:
+        return 0
+
+    matched = 0
+    for source_heading in source_headings:
+        norm_source = _normalize_heading_text(source_heading)
+        if not norm_source:
+            continue
+        if any(_headings_match(norm_source, norm_generated) for norm_generated in normalized_generated):
+            matched += 1
+    return matched
+
+
+def _normalize_heading_text(text: str) -> str:
+    cleaned = str(text or "").strip().lower()
+    cleaned = re.sub(r"^#{1,6}\s*", "", cleaned)
+    cleaned = re.sub(r"^\d+[\.\)]\s*", "", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    cleaned = cleaned.strip(" .:;!?؟،؛-–—")
+    return cleaned
+
+
+def _headings_match(source_heading: str, generated_heading: str) -> bool:
+    if source_heading == generated_heading:
+        return True
+    if len(source_heading) >= 5 and source_heading in generated_heading:
+        return True
+    if len(generated_heading) >= 5 and generated_heading in source_heading:
+        return True
+    source_tokens = {token for token in source_heading.split(" ") if len(token) >= 3}
+    generated_tokens = {token for token in generated_heading.split(" ") if len(token) >= 3}
+    if not source_tokens or not generated_tokens:
+        return False
+    overlap = len(source_tokens & generated_tokens)
+    return overlap >= max(1, min(2, len(source_tokens)))
 
 
 def _extract_heading_like_lines(text: str) -> list[str]:

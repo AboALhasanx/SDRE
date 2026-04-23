@@ -54,6 +54,9 @@ Output requirements:
 9) Heading-like source lines should generally become section/subsection blocks.
 10) Do not flatten clearly structured educational text into a few generic paragraphs.
 11) Preserve visible topical boundaries and their order as faithfully as possible.
+12) Preserve displayed equations faithfully when present in the source.
+13) Do not replace rich equations with trivial placeholders like x or n.
+14) Use Typst-friendly math expressions (e.g., O(n log n), O(n^2), T(n) = a T(n / b) + f(n)).
 
 Compact shape reminder:
 {{
@@ -204,6 +207,8 @@ Requirements for this retry:
 4) Use only supported SDRE block/inline types.
 5) Do not invent IDs/timestamps/complex theme details.
 6) Keep explicit topical divisions visible in the final block structure.
+7) Preserve displayed equations faithfully and keep them Typst-friendly.
+8) Avoid degrading equations into trivial placeholders.
 
 Why previous draft was rejected:
 {reason_lines}

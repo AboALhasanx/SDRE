@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import re
 import threading
 from typing import Any
 
@@ -24,6 +26,52 @@ class _StubClient:
         if self.responses:
             return self.responses.pop(0)
         return "not-json"
+
+
+class _HeadingAwareChunkClient:
+    def __init__(self, *, fail_on_call: int | None = None):
+        self.calls = 0
+        self.prompts: list[str] = []
+        self.fail_on_call = fail_on_call
+
+    def generate_json_draft(self, raw_text: str, prompt: str) -> str:
+        self.calls += 1
+        self.prompts.append(prompt)
+        if self.fail_on_call is not None and self.calls == self.fail_on_call:
+            return "not-json"
+
+        headings = [
+            line.strip()
+            for line in raw_text.splitlines()
+            if re.match(r"^\d+[\.\)]\s+Section\s+\d+", line.strip(), flags=re.IGNORECASE)
+        ]
+        if not headings:
+            headings = ["Chunk Heading"]
+
+        blocks: list[dict[str, Any]] = []
+        for heading in headings:
+            blocks.append({"type": "section", "title": heading})
+            blocks.append(
+                {
+                    "type": "paragraph",
+                    "content": f"Detailed explanation for {heading} with enough words to avoid sparse output.",
+                }
+            )
+        blocks.append({"type": "bullet_list", "items": ["Point A", "Point B", "Point C"]})
+        blocks.append({"type": "code_block", "value": "def chunk_step():\n    return 1", "lang": "python"})
+
+        payload = {
+            "project": {
+                "meta": {"title": headings[0]},
+                "subjects": [
+                    {
+                        "title": headings[0],
+                        "blocks": blocks,
+                    }
+                ],
+            }
+        }
+        return json.dumps(payload, ensure_ascii=False)
 
 
 def _valid_minimal_project_json() -> str:
@@ -143,6 +191,61 @@ def _heading_preserving_json() -> str:
     """
 
 
+def _heading_rich_source_en() -> str:
+    return "\n".join(
+        [
+            "1. Introduction",
+            "Detailed overview paragraph for introduction with practical educational context and examples.",
+            "2. Data Modeling",
+            "Detailed overview paragraph for data modeling with constraints, entities, and relationships.",
+            "3. Validation Rules",
+            "Detailed overview paragraph for validation strategy and strict rule enforcement behavior.",
+            "4. Build Pipeline",
+            "Detailed overview paragraph for generation and build flow with operational notes.",
+        ]
+    )
+
+
+def _subject_heading_preserving_json() -> str:
+    return """
+    {
+      "project": {
+        "meta": {"title": "Subject Heading Preservation"},
+        "subjects": [
+          {
+            "title": "1. Introduction",
+            "blocks": [
+              {"type":"paragraph","content":"Intro explanation with enough detail to be treated as substantive content."},
+              {"type":"bullet_list","items":["Context","Goal","Scope"]}
+            ]
+          },
+          {
+            "title": "2. Data Modeling",
+            "blocks": [
+              {"type":"paragraph","content":"Data modeling explanation including entities, constraints, and relationship notes."},
+              {"type":"bullet_list","items":["Entities","Constraints","Relations"]}
+            ]
+          },
+          {
+            "title": "3. Validation Rules",
+            "blocks": [
+              {"type":"paragraph","content":"Validation rules explanation with deterministic enforcement and error pathways."},
+              {"type":"bullet_list","items":["Schema checks","Model checks","Fallback handling"]}
+            ]
+          },
+          {
+            "title": "4. Build Pipeline",
+            "blocks": [
+              {"type":"paragraph","content":"Build pipeline explanation for generation, strict build, and report output handling."},
+              {"type":"bullet_list","items":["Generate","Build","Report"]}
+            ]
+          }
+        ]
+      }
+    }
+    """
+
+
 def test_ai_service_accepts_valid_json_draft():
     client = _StubClient([_valid_minimal_project_json()])
     service = AIService(client=client)
@@ -211,6 +314,14 @@ def test_ai_service_detects_heading_under_preservation_semantically():
         "Source text appears structured, but generated section/subsection coverage is too low." in reason
         for reason in result.semantic_reasons
     )
+
+
+def test_ai_service_accepts_heading_preservation_via_subject_titles():
+    service = AIService(client=_StubClient([_subject_heading_preserving_json()]))
+    result = service.generate_project_draft(_heading_rich_source_en(), max_attempts=1, _force_single_shot=True)
+    assert result.ok is True
+    assert result.failure_class is None
+    assert result.semantic_reasons == []
 
 
 def test_ai_service_retries_with_semantic_prompt_and_recovers():
@@ -382,37 +493,12 @@ def _very_long_chunkable_source() -> str:
     return "\n".join(lines)
 
 
-def _rich_chunk_response(index: int) -> str:
-    return f"""
-    {{
-      "project": {{
-        "meta": {{"title": "Chunk {index}"}},
-        "subjects": [
-          {{
-            "title": "Chunk Subject {index}",
-            "blocks": [
-              {{"type":"section","title":"Chunk {index} Title"}},
-              {{"type":"paragraph","content":"Detailed explanation for chunk {index} with enough words to avoid sparse output."}},
-              {{"type":"section","title":"Chunk {index} Concepts"}},
-              {{"type":"paragraph","content":"Additional elaboration for chunk {index} to maintain richer block density and coverage."}},
-              {{"type":"subsection","title":"Chunk {index} Notes"}},
-              {{"type":"bullet_list","items":["Point A","Point B","Point C"]}},
-              {{"type":"code_block","value":"def step_{index}():\\n    return {index}","lang":"python"}},
-              {{"type":"paragraph","content":"Closing summary for chunk {index} with practical usage remarks and boundaries."}}
-            ]
-          }}
-        ]
-      }}
-    }}
-    """
-
-
 def test_ai_service_successful_chunked_generation_flow():
     source = _very_long_chunkable_source()
     chunks = chunk_text(source)
     assert len(chunks) > 1
-    responses = [_rich_chunk_response(i + 1) for i in range(len(chunks))]
-    service = AIService(client=_StubClient(responses))
+    client = _HeadingAwareChunkClient()
+    service = AIService(client=client)
 
     result = service.generate_project_draft(source, max_attempts=1)
     assert result.ok is True
@@ -423,15 +509,14 @@ def test_ai_service_successful_chunked_generation_flow():
     assert result.validation_report is not None and result.validation_report.ok is True
     assert result.sanitized_payload is not None
     assert len(result.sanitized_payload["project"]["subjects"]) >= len(chunks)
-    assert any("processing chunk 1 of" in prompt.lower() for prompt in service.client.prompts)
+    assert any("processing chunk 1 of" in prompt.lower() for prompt in client.prompts)
 
 
 def test_ai_service_chunk_failure_propagates_with_index():
     source = _very_long_chunkable_source()
     chunks = chunk_text(source)
     assert len(chunks) > 1
-    responses = [_rich_chunk_response(1), "not-json"] + [_rich_chunk_response(i + 3) for i in range(max(0, len(chunks) - 2))]
-    service = AIService(client=_StubClient(responses))
+    service = AIService(client=_HeadingAwareChunkClient(fail_on_call=2))
 
     result = service.generate_project_draft(source, max_attempts=1)
     assert result.ok is False
@@ -456,7 +541,7 @@ def test_ai_service_chunked_mode_improves_over_single_shot_sparse_failure():
     assert single_result.failure_class == "semantic"
 
     chunks = chunk_text(source)
-    chunked_client = _StubClient([_rich_chunk_response(i + 1) for i in range(len(chunks))])
+    chunked_client = _HeadingAwareChunkClient()
     chunked_service = AIService(client=chunked_client)
     chunked_result = chunked_service.generate_project_draft(source, max_attempts=1)
 

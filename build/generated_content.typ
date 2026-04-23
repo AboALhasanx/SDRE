@@ -2,23 +2,23 @@
 
 #import "../templates/macros.typ": *
 
-#let meta = (id: "project", title: "معمارية الأنظمة الموزعة وتكامل الذكاء الاصطناعي", author: "Abualhasan", language: "ar", direction: "rtl", version: "1.0.0", created_at: "2026-04-23T14:32:57Z", updated_at: "2026-04-23T14:38:02.967Z")
+#let meta = (id: "project", title: "معمارية الأنظمة الموزعة وتكامل الذكاء الاصطناعي", author: "AI Assistant", language: "ar", direction: "rtl", version: "1.0.0", created_at: "2026-04-23T15:25:02Z", updated_at: "2026-04-23T15:42:35.565Z")
 #let theme = (page: (size: "A4", dpi: 300, margin_mm: (top: 15.0, right: 15.0, bottom: 15.0, left: 15.0)), fonts: (base: "Arial", mono: "Consolas", math: "STIX Two Math"), colors: (text: "#111111", background: "#FFFFFF", muted: "#666666", accent: "#0B5FFF", border: "#DDDDDD", code_bg: "#F6F8FA"), text: (base_size_px: 14.0, line_height: 1.6), headings: none, code: none, tables: none, ltr_inline_style: (boxed_border_color: "#DDDDDD"))
 
 #sdre_document(meta, theme)[
-// subject:subject_1 title:1. مقدمة في تطور الويب (Web Evolution)
+// subject:Web_Evolution title:مقدمة في تطور الويب (Web Evolution)
 
 // block:paragraph type:paragraph
 #sdre_paragraph([بدأ الويب كصفحات ثابتة، لكننا اليوم نتحدث عن أنظمة موزعة عالمياً (Globally Distributed Systems). التحدي الأكبر هو الحفاظ على زمن استجابة منخفض (Low Latency) مع زيادة عدد المستخدمين المتزامنين.])
 
 
-// subject:subject_2 title:2. دور الأطر البرمجية في الـ Backend
+// subject:Backend title:دور الأطر البرمجية في الـ Backend
 
 // block:paragraph type:paragraph
 #sdre_paragraph([تعتبر أطر العمل مثل Flask و FastAPI حجر الزاوية في بناء الخدمات المصغرة. فهي توفر المرونة اللازمة للتعامل مع الطلبات وتوجيهها نحو قواعد البيانات أو محركات المعالجة الأخرى.])
 
 
-// subject:subject_3 title:3. تمثيل البيانات باستخدام تنسيق JSON
+// subject:JSON title:تمثيل البيانات باستخدام تنسيق JSON
 
 // block:paragraph type:paragraph
 #sdre_paragraph([يعتبر الـ JSON هو اللغة العالمية لتبادل البيانات. إليك مثال على هيكلية ملف مشروع في نظامنا:])
@@ -34,31 +34,31 @@
 }", lang: "json")
 
 
-// subject:subject_4 title:4. التعقيد الحسابي ونظرية الخوارزميات
+// subject:subject title:التعقيد الحسابي ونظرية الخوارزميات
 
 // block:paragraph type:paragraph
-#sdre_paragraph([عند معالجة النصوص الطويلة، يجب أن نهتم بكفاءة الخوارزمية. نستخدم مقياس O(nlogn) لتقييم خوارزميات الفرز والبحث. رياضياً، يمكننا التعبير عن الوقت الكلي للمعالجة بالمعادلة التالية:])
+#sdre_paragraph([عند معالجة النصوص الطويلة، يجب أن نهتم بكفاءة الخوارزمية. نستخدم مقياس #sdre_inline_math($O(nlogn)$) لتقييم خوارزميات الفرز والبحث. رياضياً، يمكننا التعبير عن الوقت الكلي للمعالجة بالمعادلة التالية:])
 
 // block:math_block type:math_block
-#sdre_math_block($T(n)=aT(n/b)+f(n)$)
+#sdre_math_block($x$)
 
 // block:paragraph_1 type:paragraph
 #sdre_paragraph([حيث تعبر هذه المعادلة عن تقسيم المهام الكبيرة إلى مهام أصغر (Divide and Conquer).])
 
 
-// subject:subject_5 title:5. أمن المعلومات والتشفير الرقمي
+// subject:subject_1 title:أمن المعلومات والتشفير الرقمي
 
 // block:paragraph type:paragraph
 #sdre_paragraph([لحماية خصوصية المستخدم، نعتمد على خوارزميات التجزئة (Hashing). خوارزمية SHA-256 تضمن عدم إمكانية استرجاع النص الأصلي من الهاش الناتج، مما يجعلها مثالية لتخزين كلمات المرور.])
 
 
-// subject:subject_6 title:6. واجهات العرض وتجربة المستخدم (UI/UX)
+// subject:UI_UX title:واجهات العرض وتجربة المستخدم (UI/UX)
 
 // block:paragraph type:paragraph
 #sdre_paragraph([في نظام الـ SDRE، الواجهة يجب أن تكون سريعة الاستجابة. استخدام الـ Progress Bar ليس مجرد جمالية، بل هو تغذية راجعة ضرورية ليعرف المستخدم أن المعالجة جارية ولم يتوقف النظام.])
 
 
-// subject:subject_7 title:7. إدارة الذاكرة وتحسين الأداء
+// subject:subject_2 title:إدارة الذاكرة وتحسين الأداء
 
 // block:paragraph type:paragraph
 #sdre_paragraph([في لغات مثل C++ و Python نستخدم تقنيات مختلفة لإدارة الذاكرة. إليك دالة بسيطة بلغة Python تقوم بمعالجة مصفوفة من البيانات بكفاءة:])
@@ -75,19 +75,19 @@ for chunk in process_chunks(range(10000)):
     pass", lang: "python")
 
 
-// subject:subject_8 title:8. استراتيجيات التوسع الأفقي (Horizontal Scaling)
+// subject:Horizontal_Scaling title:استراتيجيات التوسع الأفقي (Horizontal Scaling)
 
 // block:paragraph type:paragraph
 #sdre_paragraph([عند وصول النظام إلى أقصى طاقته، نقوم بإضافة خوادم جديدة خلف Load Balancer. هذا يضمن توزيع الحمل بشكل عادل ويمنع سقوط النظام (System Crash).])
 
 
-// subject:subject_9 title:9. التحديات الحالية في معالجة اللغات الطبيعية
+// subject:subject_3 title:التحديات الحالية في معالجة اللغات الطبيعية
 
 // block:paragraph type:paragraph
 #sdre_paragraph([التعامل مع النصوص العربية والإنجليزية المختلطة يتطلب طبقة Sanitizer ذكية. الموديلات الحالية قد تخطئ في تحديد اتجاه النص (RTL/LTR) إذا لم يتم توجيهها بـ Few-shot examples واضحة.])
 
 
-// subject:subject_10 title:10. الخلاصة والرؤية المستقبلية
+// subject:subject_4 title:الخلاصة والرؤية المستقبلية
 
 // block:paragraph type:paragraph
 #sdre_paragraph([الانتقال إلى Phase 3 سيعني قدرة النظام على معالجة ملفات كاملة (كتب أو أبحاث) دون القلق من حدود الـ Tokens، بفضل تقنية الـ Chunking and Merging.])

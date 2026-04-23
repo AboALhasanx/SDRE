@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from copy import deepcopy
 from typing import Any
 
@@ -139,7 +140,7 @@ def _clean_block(block: Any) -> dict | None:
         return out
 
     if block_type == "math_block":
-        value = _as_non_empty_string(block.get("value")) or "x"
+        value = _normalize_math_expression(_as_non_empty_string(block.get("value")) or "x")
         return {"type": "math_block", "value": value}
 
     if block_type == "table":
@@ -263,7 +264,7 @@ def _clean_inline_node(node: Any) -> dict | None:
         return out
 
     if node_type == "inline_math":
-        value = _as_non_empty_string(node.get("value")) or "x"
+        value = _normalize_math_expression(_as_non_empty_string(node.get("value")) or "x")
         return {"type": "inline_math", "value": value}
 
     if node_type == "inline_code":
@@ -450,3 +451,33 @@ def _best_effort_text(value: Any) -> str:
     if isinstance(value, list):
         return " ".join(_best_effort_text(v) for v in value if _best_effort_text(v))
     return json.dumps(value, ensure_ascii=False)
+
+
+def _normalize_math_expression(value: str) -> str:
+    expr = re.sub(r"\s+", " ", value.strip())
+    if not expr:
+        return "x"
+
+    expr = _normalize_big_o_forms(expr)
+    expr = re.sub(r"(?i)\blog(?=[A-Za-z0-9])", "log ", expr)
+    expr = re.sub(r"\b([A-Za-z])(\d+)\b", r"\1^\2", expr)
+    expr = re.sub(r"([A-Za-z0-9\)])([A-Za-z])\(", r"\1 \2(", expr)
+    expr = re.sub(r"\s*([=+\-*/])\s*", r" \1 ", expr)
+    expr = re.sub(r"\s*\^\s*", "^", expr)
+    expr = re.sub(r"=\s*([A-Za-z])([A-Za-z](?:\^\d+)?)\b", r"= \1 \2", expr)
+    expr = re.sub(r"\+\s*([A-Za-z])([A-Za-z](?:\^\d+)?)\b", r"+ \1 \2", expr)
+    expr = re.sub(r"-\s*([A-Za-z])([A-Za-z](?:\^\d+)?)\b", r"- \1 \2", expr)
+    expr = re.sub(r"\s+", " ", expr).strip()
+    return expr or "x"
+
+
+def _normalize_big_o_forms(expr: str) -> str:
+    def _rewrite(match: re.Match[str]) -> str:
+        inner = match.group(1).strip()
+        inner = re.sub(r"(?i)\blog(?=[A-Za-z0-9])", "log ", inner)
+        inner = re.sub(r"\b([A-Za-z])(\d+)\b", r"\1^\2", inner)
+        inner = re.sub(r"([A-Za-z0-9\)])(?=log\b)", r"\1 ", inner)
+        inner = re.sub(r"\s+", " ", inner).strip()
+        return f"O({inner})"
+
+    return re.sub(r"\bO\s*\(([^()]*)\)", _rewrite, expr)
