@@ -10,8 +10,11 @@ from typing import Any, Callable
 from src.validation.engine import ValidationReport, validate_project_data
 from src.validation.errors import ErrorItem
 
+from .chunker import TextChunk, chunk_text
 from .client import AIClient, create_default_client
+from .merger import merge_chunk_projects
 from .prompt_builder import (
+    build_chunk_generation_prompt,
     build_generation_prompt,
     build_semantic_retry_prompt,
     build_technical_correction_prompt,
@@ -49,6 +52,13 @@ class LocalizedBlockTarget:
     fragment_json: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class ChunkContext:
+    chunk_index: int
+    total_chunks: int
+    heading_hint: str | None = None
+
+
 @dataclass
 class AIGenerationResult:
     ok: bool
@@ -65,6 +75,13 @@ class AIGenerationResult:
     semantic_ok: bool | None = None
     semantic_score: float | None = None
     semantic_reasons: list[str] = field(default_factory=list)
+    canceled: bool = False
+    chunked_mode: bool = False
+    total_chunks: int = 0
+    completed_chunks: int = 0
+    failed_chunk_indices: list[int] = field(default_factory=list)
+    merge_performed: bool = False
+    chunk_statuses: list[dict[str, Any]] = field(default_factory=list)
 
 
 class AIService:
@@ -88,6 +105,10 @@ class AIService:
         title_hint: str | None = None,
         author_hint: str | None = None,
         max_attempts: int | None = None,
+        progress_callback: Callable[[dict[str, Any]], None] | None = None,
+        cancel_event: Any | None = None,
+        _force_single_shot: bool = False,
+        _chunk_context: ChunkContext | None = None,
     ) -> AIGenerationResult:
         source = raw_text.strip()
         if not source:
@@ -101,6 +122,19 @@ class AIService:
                 failure_class=FailureClass.TECHNICAL.value,
                 semantic_ok=False,
             )
+
+        if not _force_single_shot:
+            chunks = chunk_text(source)
+            if len(chunks) > 1:
+                return self._generate_chunked_project_draft(
+                    source=source,
+                    chunks=chunks,
+                    title_hint=title_hint,
+                    author_hint=author_hint,
+                    max_attempts=max_attempts,
+                    progress_callback=progress_callback,
+                    cancel_event=cancel_event,
+                )
 
         attempt_limit = max(1, min(max_attempts or self.MAX_ATTEMPTS, self.MAX_ATTEMPTS))
         mode = AttemptMode.INITIAL
@@ -122,7 +156,26 @@ class AIService:
         semantic_heading_under_preserved = False
 
         while attempts < attempt_limit:
+            if _is_cancelled(cancel_event):
+                return AIGenerationResult(
+                    ok=False,
+                    stage="cancelled",
+                    message="AI draft generation was cancelled.",
+                    attempts=max(1, attempts),
+                    canceled=True,
+                )
+
             attempts += 1
+            _emit_progress(
+                progress_callback,
+                {
+                    "event": "attempt",
+                    "attempt": attempts,
+                    "max_attempts": attempt_limit,
+                    "mode": mode.value,
+                    "retrying": attempts > 1,
+                },
+            )
 
             prompt = self._build_attempt_prompt(
                 mode=mode,
@@ -134,6 +187,7 @@ class AIService:
                 local_target=local_target,
                 semantic_reasons=semantic_reasons,
                 semantic_heading_under_preserved=semantic_heading_under_preserved,
+                chunk_context=_chunk_context,
                 last_sanitized=last_sanitized,
                 last_parsed=last_parsed,
             )
@@ -142,18 +196,40 @@ class AIService:
                 raw_output = self.client.generate_json_draft(source, prompt)
             except Exception as exc:
                 last_failure_class = FailureClass.TECHNICAL
-                last_message = "AI provider request failed."
-                last_report = _error_report(stage="provider", code="ai.provider.failed", message=str(exc))
+                if _is_timeout_error(exc):
+                    last_message = "AI provider request timed out."
+                    last_report = _error_report(stage="provider", code="ai.provider.timeout", message=str(exc))
+                else:
+                    last_message = "AI provider request failed."
+                    last_report = _error_report(stage="provider", code="ai.provider.failed", message=str(exc))
                 technical_errors = _report_errors(last_report)
                 technical_previous_json = last_sanitized or last_parsed
                 local_target = None
                 if attempts < attempt_limit:
+                    _emit_progress(
+                        progress_callback,
+                        {
+                            "event": "retry",
+                            "next_attempt": attempts + 1,
+                            "failure_class": FailureClass.TECHNICAL.value,
+                            "reason": last_message,
+                        },
+                    )
                     mode = AttemptMode.TECHNICAL_CORRECTION
                     correction_applied = True
                     continue
                 break
 
             last_raw_output = raw_output
+            if _is_cancelled(cancel_event):
+                return AIGenerationResult(
+                    ok=False,
+                    stage="cancelled",
+                    message="AI draft generation was cancelled.",
+                    raw_output=last_raw_output,
+                    attempts=attempts,
+                    canceled=True,
+                )
 
             parsed, parse_error = _parse_model_output(raw_output)
             if parse_error is not None:
@@ -164,6 +240,15 @@ class AIService:
                 technical_previous_json = last_sanitized or last_parsed
                 local_target = None
                 if attempts < attempt_limit:
+                    _emit_progress(
+                        progress_callback,
+                        {
+                            "event": "retry",
+                            "next_attempt": attempts + 1,
+                            "failure_class": FailureClass.TECHNICAL.value,
+                            "reason": "JSON parse failure",
+                        },
+                    )
                     mode = AttemptMode.TECHNICAL_CORRECTION
                     correction_applied = True
                     continue
@@ -175,6 +260,16 @@ class AIService:
                 if patched is not None:
                     adapted_input = patched
             last_parsed = parsed
+            if _is_cancelled(cancel_event):
+                return AIGenerationResult(
+                    ok=False,
+                    stage="cancelled",
+                    message="AI draft generation was cancelled.",
+                    raw_output=last_raw_output,
+                    parsed_draft=last_parsed,
+                    attempts=attempts,
+                    canceled=True,
+                )
 
             try:
                 sanitized = self._adapter(adapted_input, title_hint=title_hint, author_hint=author_hint)
@@ -186,12 +281,32 @@ class AIService:
                 technical_previous_json = adapted_input
                 local_target = None
                 if attempts < attempt_limit:
+                    _emit_progress(
+                        progress_callback,
+                        {
+                            "event": "retry",
+                            "next_attempt": attempts + 1,
+                            "failure_class": FailureClass.TECHNICAL.value,
+                            "reason": "Sanitizer failure",
+                        },
+                    )
                     mode = AttemptMode.TECHNICAL_CORRECTION
                     correction_applied = True
                     continue
                 break
 
             last_sanitized = sanitized
+            if _is_cancelled(cancel_event):
+                return AIGenerationResult(
+                    ok=False,
+                    stage="cancelled",
+                    message="AI draft generation was cancelled.",
+                    raw_output=last_raw_output,
+                    parsed_draft=last_parsed,
+                    sanitized_payload=last_sanitized,
+                    attempts=attempts,
+                    canceled=True,
+                )
             report = self._validator(sanitized, file_label="<ai-sanitized>")
             if not report.ok:
                 last_failure_class = FailureClass.TECHNICAL
@@ -201,6 +316,16 @@ class AIService:
                 technical_previous_json = sanitized
                 local_target = _detect_localized_block_target(report, sanitized)
                 if attempts < attempt_limit:
+                    _emit_progress(
+                        progress_callback,
+                        {
+                            "event": "retry",
+                            "next_attempt": attempts + 1,
+                            "failure_class": FailureClass.TECHNICAL.value,
+                            "reason": "Validation failure",
+                            "localized": local_target is not None,
+                        },
+                    )
                     mode = AttemptMode.TECHNICAL_CORRECTION
                     correction_applied = True
                     continue
@@ -219,6 +344,16 @@ class AIService:
                 semantic_reasons = semantic.reasons
                 semantic_heading_under_preserved = semantic.heading_under_preserved
                 if attempts < attempt_limit:
+                    _emit_progress(
+                        progress_callback,
+                        {
+                            "event": "retry",
+                            "next_attempt": attempts + 1,
+                            "failure_class": FailureClass.SEMANTIC.value,
+                            "reason": semantic.reasons[0] if semantic.reasons else "Semantic completeness failure",
+                            "heading_under_preserved": semantic.heading_under_preserved,
+                        },
+                    )
                     mode = AttemptMode.SEMANTIC_RETRY
                     correction_applied = True
                     continue
@@ -271,6 +406,237 @@ class AIService:
             semantic_reasons=last_semantic.reasons if last_failure_class == FailureClass.SEMANTIC else [],
         )
 
+    def _generate_chunked_project_draft(
+        self,
+        *,
+        source: str,
+        chunks: list[TextChunk],
+        title_hint: str | None,
+        author_hint: str | None,
+        max_attempts: int | None,
+        progress_callback: Callable[[dict[str, Any]], None] | None,
+        cancel_event: Any | None,
+    ) -> AIGenerationResult:
+        total_chunks = len(chunks)
+        chunk_statuses: list[dict[str, Any]] = []
+        failed_chunk_indices: list[int] = []
+        completed_chunks = 0
+        total_attempts = 0
+        merged_inputs: list[dict[str, Any]] = []
+
+        _emit_progress(
+            progress_callback,
+            {
+                "event": "chunk_mode",
+                "chunked_mode": True,
+                "total_chunks": total_chunks,
+            },
+        )
+
+        for chunk in chunks:
+            if _is_cancelled(cancel_event):
+                return AIGenerationResult(
+                    ok=False,
+                    stage="cancelled",
+                    message="AI draft generation was cancelled.",
+                    attempts=max(1, total_attempts),
+                    canceled=True,
+                    chunked_mode=True,
+                    total_chunks=total_chunks,
+                    completed_chunks=completed_chunks,
+                    failed_chunk_indices=failed_chunk_indices,
+                    merge_performed=False,
+                    chunk_statuses=chunk_statuses,
+                )
+
+            _emit_progress(
+                progress_callback,
+                {
+                    "event": "chunk_start",
+                    "chunk_index": chunk.index,
+                    "total_chunks": total_chunks,
+                    "chunk_chars": chunk.char_count,
+                },
+            )
+
+            def _chunk_progress(payload: dict[str, Any]) -> None:
+                merged = dict(payload)
+                merged["chunk_index"] = chunk.index
+                merged["total_chunks"] = total_chunks
+                _emit_progress(progress_callback, merged)
+
+            chunk_result = self.generate_project_draft(
+                chunk.text,
+                title_hint=title_hint,
+                author_hint=author_hint,
+                max_attempts=max_attempts,
+                progress_callback=_chunk_progress,
+                cancel_event=cancel_event,
+                _force_single_shot=True,
+                _chunk_context=ChunkContext(
+                    chunk_index=chunk.index,
+                    total_chunks=total_chunks,
+                    heading_hint=chunk.heading_hint,
+                ),
+            )
+            total_attempts += max(1, chunk_result.attempts)
+            chunk_statuses.append(
+                {
+                    "chunk_index": chunk.index,
+                    "ok": chunk_result.ok,
+                    "stage": chunk_result.stage,
+                    "attempts": chunk_result.attempts,
+                    "failure_class": chunk_result.failure_class,
+                    "message": chunk_result.message,
+                }
+            )
+
+            if chunk_result.ok and chunk_result.sanitized_payload is not None:
+                completed_chunks += 1
+                merged_inputs.append(chunk_result.sanitized_payload)
+                _emit_progress(
+                    progress_callback,
+                    {
+                        "event": "chunk_done",
+                        "chunk_index": chunk.index,
+                        "total_chunks": total_chunks,
+                        "completed_chunks": completed_chunks,
+                    },
+                )
+                continue
+
+            failed_chunk_indices.append(chunk.index)
+            _emit_progress(
+                progress_callback,
+                {
+                    "event": "chunk_failed",
+                    "chunk_index": chunk.index,
+                    "total_chunks": total_chunks,
+                    "stage": chunk_result.stage,
+                    "failure_class": chunk_result.failure_class,
+                },
+            )
+            return AIGenerationResult(
+                ok=False,
+                stage="chunk_generation",
+                message=f"Chunk {chunk.index}/{total_chunks} failed: {chunk_result.message}",
+                raw_output=chunk_result.raw_output,
+                parsed_draft=chunk_result.parsed_draft,
+                sanitized_payload=chunk_result.sanitized_payload,
+                validation_report=chunk_result.validation_report,
+                attempts=total_attempts,
+                failure_class=chunk_result.failure_class or FailureClass.TECHNICAL.value,
+                correction_applied=any(s.get("attempts", 1) > 1 for s in chunk_statuses),
+                max_retries_exceeded=chunk_result.max_retries_exceeded,
+                semantic_ok=chunk_result.semantic_ok,
+                semantic_score=chunk_result.semantic_score,
+                semantic_reasons=chunk_result.semantic_reasons,
+                canceled=chunk_result.canceled,
+                chunked_mode=True,
+                total_chunks=total_chunks,
+                completed_chunks=completed_chunks,
+                failed_chunk_indices=failed_chunk_indices,
+                merge_performed=False,
+                chunk_statuses=chunk_statuses,
+            )
+
+        try:
+            merged_payload, merge_summary = merge_chunk_projects(
+                merged_inputs,
+                title_hint=title_hint,
+                author_hint=author_hint,
+            )
+        except Exception as exc:
+            report = _error_report(stage="merge", code="ai.chunk.merge_failed", message=str(exc))
+            return AIGenerationResult(
+                ok=False,
+                stage="merge",
+                message=f"Chunk merge failed: {exc}",
+                validation_report=report,
+                attempts=total_attempts or 1,
+                failure_class=FailureClass.TECHNICAL.value,
+                chunked_mode=True,
+                total_chunks=total_chunks,
+                completed_chunks=completed_chunks,
+                failed_chunk_indices=failed_chunk_indices,
+                merge_performed=False,
+                chunk_statuses=chunk_statuses,
+            )
+
+        report = self._validator(merged_payload, file_label="<ai-merged>")
+        if not report.ok:
+            return AIGenerationResult(
+                ok=False,
+                stage="merge_validation",
+                message="Merged chunk output failed strict validation.",
+                sanitized_payload=merged_payload,
+                validation_report=report,
+                attempts=total_attempts or 1,
+                failure_class=FailureClass.TECHNICAL.value,
+                chunked_mode=True,
+                total_chunks=total_chunks,
+                completed_chunks=completed_chunks,
+                failed_chunk_indices=failed_chunk_indices,
+                merge_performed=True,
+                chunk_statuses=chunk_statuses,
+            )
+
+        semantic = _assess_semantic_completeness(source, merged_payload)
+        if not semantic.ok:
+            semantic_report = _error_report(
+                stage="semantic",
+                code="ai.semantic.incomplete",
+                message="; ".join(semantic.reasons) if semantic.reasons else "Semantically incomplete output.",
+            )
+            return AIGenerationResult(
+                ok=False,
+                stage="semantic",
+                message="Merged chunk output is still semantically incomplete.",
+                sanitized_payload=merged_payload,
+                validation_report=semantic_report,
+                attempts=total_attempts or 1,
+                failure_class=FailureClass.SEMANTIC.value,
+                semantic_ok=False,
+                semantic_score=semantic.score,
+                semantic_reasons=semantic.reasons,
+                chunked_mode=True,
+                total_chunks=total_chunks,
+                completed_chunks=completed_chunks,
+                failed_chunk_indices=failed_chunk_indices,
+                merge_performed=True,
+                chunk_statuses=chunk_statuses,
+            )
+
+        return AIGenerationResult(
+            ok=True,
+            stage="ok",
+            message=f"AI draft generated and validated in chunked mode ({total_chunks} chunks).",
+            raw_output=json.dumps(merged_payload, ensure_ascii=False),
+            parsed_draft=merged_payload,
+            sanitized_payload=merged_payload,
+            validation_report=report,
+            attempts=total_attempts or 1,
+            correction_applied=any(s.get("attempts", 1) > 1 for s in chunk_statuses),
+            semantic_ok=True,
+            semantic_score=semantic.score,
+            semantic_reasons=semantic.reasons,
+            chunked_mode=True,
+            total_chunks=total_chunks,
+            completed_chunks=completed_chunks,
+            failed_chunk_indices=failed_chunk_indices,
+            merge_performed=True,
+            chunk_statuses=chunk_statuses
+            + [
+                {
+                    "merge_summary": {
+                        "total_chunks": merge_summary.total_chunks,
+                        "merged_subjects": merge_summary.merged_subjects,
+                        "skipped_chunk_indices": merge_summary.skipped_chunk_indices,
+                    }
+                }
+            ],
+        )
+
     @staticmethod
     def _build_attempt_prompt(
         *,
@@ -283,10 +649,19 @@ class AIService:
         local_target: LocalizedBlockTarget | None,
         semantic_reasons: list[str],
         semantic_heading_under_preserved: bool,
+        chunk_context: ChunkContext | None,
         last_sanitized: dict[str, Any] | None,
         last_parsed: dict[str, Any] | None,
     ) -> str:
         if mode == AttemptMode.INITIAL:
+            if chunk_context is not None:
+                return build_chunk_generation_prompt(
+                    chunk_index=chunk_context.chunk_index,
+                    total_chunks=chunk_context.total_chunks,
+                    chunk_heading_hint=chunk_context.heading_hint,
+                    title_hint=title_hint,
+                    author_hint=author_hint,
+                )
             return build_generation_prompt(title_hint=title_hint, author_hint=author_hint)
 
         if mode == AttemptMode.TECHNICAL_CORRECTION:
@@ -592,3 +967,30 @@ def _inline_text_len(content: Any) -> int:
 def _error_report(*, stage: str, code: str, message: str) -> ValidationReport:
     err = ErrorItem(code=code, severity="error", path="/", message=message, hint="")
     return ValidationReport(ok=False, file="<ai>", stage=stage, errors=[err])
+
+
+def _emit_progress(callback: Callable[[dict[str, Any]], None] | None, payload: dict[str, Any]) -> None:
+    if callback is None:
+        return
+    try:
+        callback(payload)
+    except Exception:
+        return
+
+
+def _is_cancelled(cancel_event: Any | None) -> bool:
+    if cancel_event is None:
+        return False
+    is_set = getattr(cancel_event, "is_set", None)
+    if callable(is_set):
+        try:
+            return bool(is_set())
+        except Exception:
+            return False
+    return False
+
+
+def _is_timeout_error(exc: Exception) -> bool:
+    if isinstance(exc, TimeoutError):
+        return True
+    return "timed out" in str(exc).lower() or "timeout" in str(exc).lower()

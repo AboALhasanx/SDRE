@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import socket
 from abc import ABC, abstractmethod
 from typing import Any
 from urllib import error, request
@@ -20,7 +21,7 @@ class OpenAIChatClient(AIClient):
         api_key: str,
         model: str = "gpt-4o-mini",
         base_url: str = "https://api.openai.com/v1",
-        timeout_s: int = 60,
+        timeout_s: int = 45,
     ) -> None:
         self.api_key = api_key
         self.model = model
@@ -53,6 +54,13 @@ class OpenAIChatClient(AIClient):
         except error.HTTPError as e:
             detail = e.read().decode("utf-8", errors="replace")
             raise RuntimeError(f"AI provider HTTP error {e.code}: {detail}") from e
+        except error.URLError as e:
+            reason = getattr(e, "reason", None)
+            if isinstance(reason, (socket.timeout, TimeoutError)) or "timed out" in str(reason).lower():
+                raise RuntimeError(f"AI provider request timed out after {self.timeout_s}s.") from e
+            raise RuntimeError(f"AI provider request failed: {e}") from e
+        except (socket.timeout, TimeoutError) as e:
+            raise RuntimeError(f"AI provider request timed out after {self.timeout_s}s.") from e
         except Exception as e:
             raise RuntimeError(f"AI provider request failed: {e}") from e
 

@@ -5,6 +5,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Callable
 
 from src.ai.ai_service import AIGenerationResult, AIService
 from src.generator.engine import generate_content
@@ -207,11 +208,15 @@ class AppController:
         *,
         title_hint: str | None = None,
         author_hint: str | None = None,
+        progress_callback: Callable[[dict[str, Any]], None] | None = None,
+        cancel_event: Any | None = None,
     ) -> AIGenerationResult:
         result = self.ai_service.generate_project_draft(
             raw_text,
             title_hint=title_hint,
             author_hint=author_hint,
+            progress_callback=progress_callback,
+            cancel_event=cancel_event,
         )
         self.ai_last_result = result
         self.ai_generated_payload = result.sanitized_payload if result.ok else None

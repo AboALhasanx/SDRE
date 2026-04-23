@@ -2,57 +2,93 @@
 
 #import "../templates/macros.typ": *
 
-#let meta = (id: "Algorithm_Efficiency", title: "تحليل كفاءة الخوارزميات (Algorithm Efficiency)", author: "AI Assistant", language: "ar", direction: "rtl", version: "1.0.0", created_at: "2026-04-23T13:12:09Z", updated_at: "2026-04-23T13:12:17.534Z")
+#let meta = (id: "project", title: "معمارية الأنظمة الموزعة وتكامل الذكاء الاصطناعي", author: "Abualhasan", language: "ar", direction: "rtl", version: "1.0.0", created_at: "2026-04-23T14:32:57Z", updated_at: "2026-04-23T14:38:02.967Z")
 #let theme = (page: (size: "A4", dpi: 300, margin_mm: (top: 15.0, right: 15.0, bottom: 15.0, left: 15.0)), fonts: (base: "Arial", mono: "Consolas", math: "STIX Two Math"), colors: (text: "#111111", background: "#FFFFFF", muted: "#666666", accent: "#0B5FFF", border: "#DDDDDD", code_bg: "#F6F8FA"), text: (base_size_px: 14.0, line_height: 1.6), headings: none, code: none, tables: none, ltr_inline_style: (boxed_border_color: "#DDDDDD"))
 
 #sdre_document(meta, theme)[
-// subject:Time_Complexity title:مقدمة عن تعقيد الوقت (Time Complexity)
+// subject:subject_1 title:1. مقدمة في تطور الويب (Web Evolution)
 
 // block:paragraph type:paragraph
-#sdre_paragraph([في عالم هندسة البرمجيات، لا يكفي أن تعمل الخوارزمية بشكل صحيح، بل يجب أن تكون فعالة. نستخدم مقياس Big O Notation لوصف نمو وقت التنفيذ بالنسبة لحجم البيانات المدخلة n.])
+#sdre_paragraph([بدأ الويب كصفحات ثابتة، لكننا اليوم نتحدث عن أنظمة موزعة عالمياً (Globally Distributed Systems). التحدي الأكبر هو الحفاظ على زمن استجابة منخفض (Low Latency) مع زيادة عدد المستخدمين المتزامنين.])
 
 
-// subject:Mathematical_Representation title:التمثيل الرياضي (Mathematical Representation)
-
-// block:paragraph type:paragraph
-#sdre_paragraph([إذا كانت لدينا دالة تعبر عن الوقت المستغرق، نرمز لها بالرمز T(n). على سبيل المثال، في خوارزمية البحث الخطي (Linear Search)، يكون التعقيد هو:])
-
-// block:math_block type:math_block
-#sdre_math_block($T(n)=O(n)$)
-
-// block:paragraph_1 type:paragraph
-#sdre_paragraph([أما في حالة الـ Nested Loops، فغالباً ما نصل إلى التعقيد التربيعي O(n2).])
-
-
-// subject:Code_Implementation title:مثال برمجي (Code Implementation)
+// subject:subject_2 title:2. دور الأطر البرمجية في الـ Backend
 
 // block:paragraph type:paragraph
-#sdre_paragraph([لنلقِ نظرة على هذه الدالة المكتوبة بلغة C++ والتي تقوم بحساب مجموع عناصر مصفوفة (Array Sum):])
+#sdre_paragraph([تعتبر أطر العمل مثل Flask و FastAPI حجر الزاوية في بناء الخدمات المصغرة. فهي توفر المرونة اللازمة للتعامل مع الطلبات وتوجيهها نحو قواعد البيانات أو محركات المعالجة الأخرى.])
+
+
+// subject:subject_3 title:3. تمثيل البيانات باستخدام تنسيق JSON
+
+// block:paragraph type:paragraph
+#sdre_paragraph([يعتبر الـ JSON هو اللغة العالمية لتبادل البيانات. إليك مثال على هيكلية ملف مشروع في نظامنا:])
 
 // block:code_block type:code_block
-#sdre_code_block("int calculateSum(int arr[], int n) {
-    int sum = 0; // Initialize sum
-    for (int i = 0; i < n; i++) {
-        sum += arr[i];
-    }
-    return sum;
-}", lang: "cpp")
+#sdre_code_block("{
+  \"project_id\": \"sdre_2026_test\",
+  \"metadata\": {
+    \"author\": \"Abualhasan\",
+    \"version\": \"2.1.0\",
+    \"features\": [\"AI_Draft\", \"Sanitizer\", \"Validation\"]
+  }
+}", lang: "json")
+
+
+// subject:subject_4 title:4. التعقيد الحسابي ونظرية الخوارزميات
+
+// block:paragraph type:paragraph
+#sdre_paragraph([عند معالجة النصوص الطويلة، يجب أن نهتم بكفاءة الخوارزمية. نستخدم مقياس O(nlogn) لتقييم خوارزميات الفرز والبحث. رياضياً، يمكننا التعبير عن الوقت الكلي للمعالجة بالمعادلة التالية:])
+
+// block:math_block type:math_block
+#sdre_math_block($T(n)=aT(n/b)+f(n)$)
 
 // block:paragraph_1 type:paragraph
-#sdre_paragraph([في هذا الكود، المتغير sum يتم تحديثه داخل حلقة for واحدة، مما يجعل الخوارزمية تعمل بكفاءة عالية جداً من نوع Linear Time.])
+#sdre_paragraph([حيث تعبر هذه المعادلة عن تقسيم المهام الكبيرة إلى مهام أصغر (Divide and Conquer).])
 
 
-// subject:Performance_Comparison title:المقارنة بين الأداء (Performance Comparison)
-
-// block:paragraph type:paragraph
-#sdre_paragraph([هناك عدة أنواع من التعقيد يجب على كل مبرمج معرفتها:])
-
-// block:bullet_list type:bullet_list
-#sdre_bullet_list(([Constant Time: O(1) - الأسرع دائماً.], [Logarithmic Time: O(logn) - مثل الـ Binary Search.], [Space Complexity: وهو قياس مقدار الذاكرة (Memory Consumption) التي يحتاجها البرنامج أثناء التشغيل.]))
-
-
-// subject:subject title:الخلاصة والتوصيات
+// subject:subject_5 title:5. أمن المعلومات والتشفير الرقمي
 
 // block:paragraph type:paragraph
-#sdre_paragraph([عند بناء أي Backend System باستخدام Flask أو غيرها، يجب الانتباه إلى أن استهلاك المعالج (CPU Usage) يزداد طردياً مع سوء اختيار الخوارزمية. دائماً ابحث عن O(nlogn) بدلاً من O(n2) لتحسين تجربة المستخدم.])
+#sdre_paragraph([لحماية خصوصية المستخدم، نعتمد على خوارزميات التجزئة (Hashing). خوارزمية SHA-256 تضمن عدم إمكانية استرجاع النص الأصلي من الهاش الناتج، مما يجعلها مثالية لتخزين كلمات المرور.])
+
+
+// subject:subject_6 title:6. واجهات العرض وتجربة المستخدم (UI/UX)
+
+// block:paragraph type:paragraph
+#sdre_paragraph([في نظام الـ SDRE، الواجهة يجب أن تكون سريعة الاستجابة. استخدام الـ Progress Bar ليس مجرد جمالية، بل هو تغذية راجعة ضرورية ليعرف المستخدم أن المعالجة جارية ولم يتوقف النظام.])
+
+
+// subject:subject_7 title:7. إدارة الذاكرة وتحسين الأداء
+
+// block:paragraph type:paragraph
+#sdre_paragraph([في لغات مثل C++ و Python نستخدم تقنيات مختلفة لإدارة الذاكرة. إليك دالة بسيطة بلغة Python تقوم بمعالجة مصفوفة من البيانات بكفاءة:])
+
+// block:code_block type:code_block
+#sdre_code_block("def process_chunks(data_list, chunk_size=500):
+    \"\"\"تقسيم البيانات إلى أجزاء ومعالجتها لتقليل استهلاك الذاكرة\"\"\"
+    for i in range(0, len(data_list), chunk_size):
+        yield data_list[i:i + chunk_size]
+
+# مثال لاستدعاء الدالة
+for chunk in process_chunks(range(10000)):
+    # تنفيذ المعالجة هنا
+    pass", lang: "python")
+
+
+// subject:subject_8 title:8. استراتيجيات التوسع الأفقي (Horizontal Scaling)
+
+// block:paragraph type:paragraph
+#sdre_paragraph([عند وصول النظام إلى أقصى طاقته، نقوم بإضافة خوادم جديدة خلف Load Balancer. هذا يضمن توزيع الحمل بشكل عادل ويمنع سقوط النظام (System Crash).])
+
+
+// subject:subject_9 title:9. التحديات الحالية في معالجة اللغات الطبيعية
+
+// block:paragraph type:paragraph
+#sdre_paragraph([التعامل مع النصوص العربية والإنجليزية المختلطة يتطلب طبقة Sanitizer ذكية. الموديلات الحالية قد تخطئ في تحديد اتجاه النص (RTL/LTR) إذا لم يتم توجيهها بـ Few-shot examples واضحة.])
+
+
+// subject:subject_10 title:10. الخلاصة والرؤية المستقبلية
+
+// block:paragraph type:paragraph
+#sdre_paragraph([الانتقال إلى Phase 3 سيعني قدرة النظام على معالجة ملفات كاملة (كتب أو أبحاث) دون القلق من حدود الـ Tokens، بفضل تقنية الـ Chunking and Merging.])
 ]

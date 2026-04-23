@@ -164,6 +164,7 @@ class MainWindow(ctk.CTk):
             self.ai_tab,
             on_generate=self._generate_ai_draft,
             on_import=self._import_ai_draft,
+            on_generation_done=self._on_ai_generation_done,
         )
         self.ai_import_panel.grid(row=0, column=0, sticky="nsew")
 
@@ -433,9 +434,35 @@ class MainWindow(ctk.CTk):
             self.logs.set_status(f"JSON import failed at {rep.stage}")
         return rep
 
-    def _generate_ai_draft(self, raw_text: str, title: str | None, author: str | None):
-        result = self.controller.generate_ai_draft(raw_text, title_hint=title, author_hint=author)
+    def _generate_ai_draft(
+        self,
+        raw_text: str,
+        title: str | None,
+        author: str | None,
+        *,
+        progress_callback=None,
+        cancel_event=None,
+    ):
+        return self.controller.generate_ai_draft(
+            raw_text,
+            title_hint=title,
+            author_hint=author,
+            progress_callback=progress_callback,
+            cancel_event=cancel_event,
+        )
+
+    def _on_ai_generation_done(self, result):
         self.logs.clear()
+        if result.canceled:
+            self.logs.append("AI draft generation cancelled by user.")
+            self.logs.set_status("AI draft cancelled")
+            return
+
+        if result.chunked_mode:
+            self.logs.append(f"Chunked mode: {result.completed_chunks}/{result.total_chunks} chunks completed.")
+            if result.failed_chunk_indices:
+                self.logs.append(f"Failed chunks: {result.failed_chunk_indices}")
+
         if result.ok:
             if result.attempts > 1:
                 self.logs.append(f"AI draft generated and validated after {result.attempts} attempts.")
@@ -460,7 +487,6 @@ class MainWindow(ctk.CTk):
             elif result.message:
                 self.logs.append(result.message)
             self.logs.set_status(f"AI draft failed at {result.stage}")
-        return result
 
     def _import_ai_draft(self):
         rep = self.controller.import_ai_generated_project()

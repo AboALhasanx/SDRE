@@ -1,1 +1,19 @@
-ok=True mode=strict stage=ok
+ok=False mode=preview stage=compile
+=== stderr ===
+error: unknown variable: aT
+   ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\build\generated_content.typ:43:23
+   │
+43 │ #sdre_math_block($T(n)=aT(n/b)+f(n)$)
+   │                        ^^
+   │
+   = hint: if you meant to display multiple letters as is, try adding spaces between each letter: `a T`
+   = hint: or if you meant to display this as text, try placing it in quotes: `"aT"`
+
+help: error occurred while importing this module
+  ┌─ \\?\C:\Users\gokoq\OneDrive\Documents\SDRE\templates\main.typ:9:9
+  │
+9 │ #include "../build/generated_content.typ"
+  │          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+=== errors ===
+typst.compile_failed error /: Typst compile failed with exit code 1.
+  hint: See stderr for Typst diagnostics.

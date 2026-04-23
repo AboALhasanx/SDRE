@@ -84,6 +84,29 @@ Additional context:
 """.strip()
 
 
+def build_chunk_generation_prompt(
+    *,
+    chunk_index: int,
+    total_chunks: int,
+    chunk_heading_hint: str | None = None,
+    title_hint: str | None = None,
+    author_hint: str | None = None,
+) -> str:
+    heading_note = _hint_line("Chunk heading hint", chunk_heading_hint)
+    base = build_generation_prompt(title_hint=title_hint, author_hint=author_hint)
+    return f"""
+{base}
+
+Chunk-specific requirements:
+1) You are processing chunk {chunk_index} of {total_chunks} from one long source text.
+2) Prefer producing exactly one subject for this chunk.
+3) Preserve local heading/subheading boundaries inside this chunk.
+4) Keep chunk order fidelity and avoid flattening local structure.
+5) Do not include content that is not present in this chunk.
+- {heading_note}
+""".strip()
+
+
 def build_technical_correction_prompt(
     *,
     raw_text: str,

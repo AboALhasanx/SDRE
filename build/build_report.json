@@ -1,22 +1,32 @@
 {
-  "ok": true,
-  "mode": "strict",
+  "ok": false,
+  "mode": "preview",
   "source_file": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\_ui_snapshot.json",
   "generated_typst_file": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\generated_content.typ",
   "template_file": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\templates\\main.typ",
-  "output_pdf": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\Algorithm_Efficiency_2026-04-23_16-12-39.pdf",
-  "stage": "ok",
+  "output_pdf": "C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\project_2026-04-23_17-38-06.pdf",
+  "stage": "compile",
   "stdout": "",
-  "stderr": "",
-  "errors": [],
+  "stderr": "error: unknown variable: aT\n   ┌─ \\\\?\\C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\build\\generated_content.typ:43:23\n   │\n43 │ #sdre_math_block($T(n)=aT(n/b)+f(n)$)\n   │                        ^^\n   │\n   = hint: if you meant to display multiple letters as is, try adding spaces between each letter: `a T`\n   = hint: or if you meant to display this as text, try placing it in quotes: `\"aT\"`\n\nhelp: error occurred while importing this module\n  ┌─ \\\\?\\C:\\Users\\gokoq\\OneDrive\\Documents\\SDRE\\templates\\main.typ:9:9\n  │\n9 │ #include \"../build/generated_content.typ\"\n  │          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\n",
+  "errors": [
+    {
+      "code": "typst.compile_failed",
+      "severity": "error",
+      "path": "/",
+      "message": "Typst compile failed with exit code 1.",
+      "hint": "See stderr for Typst diagnostics.",
+      "line": null,
+      "column": null
+    }
+  ],
   "timings_ms": {
-    "load_json": 18,
-    "schema": 125,
-    "model": 126,
-    "generate": 127,
-    "templates": 127,
-    "typst": 138,
-    "compile_ms": 149,
-    "compile": 288
+    "load_json": 17,
+    "schema": 202,
+    "model": 202,
+    "generate": 203,
+    "templates": 204,
+    "typst": 215,
+    "compile_ms": 173,
+    "compile": 388
   }
 }

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import threading
 from typing import Any
 
+from src.ai.chunker import chunk_text
 from src.ai.ai_service import AIService
 from src.validation.errors import ErrorItem
 from src.validation.report import ValidationReport
@@ -316,3 +318,148 @@ def test_ai_service_uses_localized_block_correction_when_possible():
     assert call_counter["count"] == 2
     assert any("corrected fragment" in prompt for prompt in client.prompts[1:])
     assert any("/project/subjects/0/blocks/0" in prompt for prompt in client.prompts[1:])
+
+
+def test_ai_service_emits_attempt_progress_and_retry_events():
+    client = _StubClient(["not-json", _valid_rich_project_json()])
+    service = AIService(client=client)
+    events: list[dict[str, Any]] = []
+
+    result = service.generate_project_draft("Any source text", progress_callback=events.append)
+
+    assert result.ok is True
+    attempt_events = [e for e in events if e.get("event") == "attempt"]
+    retry_events = [e for e in events if e.get("event") == "retry"]
+    assert len(attempt_events) >= 2
+    assert retry_events
+    assert retry_events[0].get("failure_class") == "technical"
+
+
+def test_ai_service_timeout_failure_is_technical():
+    class _TimeoutClient:
+        def generate_json_draft(self, raw_text: str, prompt: str) -> str:
+            raise TimeoutError("request timed out")
+
+    service = AIService(client=_TimeoutClient())
+    result = service.generate_project_draft("Source text", max_attempts=1)
+    assert result.ok is False
+    assert result.failure_class == "technical"
+    assert result.stage == "provider"
+    assert result.validation_report is not None
+    assert result.validation_report.errors
+    assert result.validation_report.errors[0].code == "ai.provider.timeout"
+
+
+def test_ai_service_can_cancel_before_retry_attempt():
+    client = _StubClient(["not-json", _valid_rich_project_json()])
+    service = AIService(client=client)
+    cancel_event = threading.Event()
+
+    def _progress(payload: dict[str, Any]) -> None:
+        if payload.get("event") == "retry":
+            cancel_event.set()
+
+    result = service.generate_project_draft(
+        "Any source text",
+        progress_callback=_progress,
+        cancel_event=cancel_event,
+    )
+
+    assert result.ok is False
+    assert result.canceled is True
+    assert result.stage == "cancelled"
+
+
+def _very_long_chunkable_source() -> str:
+    section_paragraph = (
+        "This section includes detailed explanation, examples, and notes about implementation behavior. "
+        "It is intentionally long to trigger chunking while preserving visible heading boundaries."
+    )
+    lines: list[str] = []
+    for i in range(1, 9):
+        lines.append(f"{i}. Section {i}")
+        lines.append((section_paragraph + " ") * 6)
+    return "\n".join(lines)
+
+
+def _rich_chunk_response(index: int) -> str:
+    return f"""
+    {{
+      "project": {{
+        "meta": {{"title": "Chunk {index}"}},
+        "subjects": [
+          {{
+            "title": "Chunk Subject {index}",
+            "blocks": [
+              {{"type":"section","title":"Chunk {index} Title"}},
+              {{"type":"paragraph","content":"Detailed explanation for chunk {index} with enough words to avoid sparse output."}},
+              {{"type":"section","title":"Chunk {index} Concepts"}},
+              {{"type":"paragraph","content":"Additional elaboration for chunk {index} to maintain richer block density and coverage."}},
+              {{"type":"subsection","title":"Chunk {index} Notes"}},
+              {{"type":"bullet_list","items":["Point A","Point B","Point C"]}},
+              {{"type":"code_block","value":"def step_{index}():\\n    return {index}","lang":"python"}},
+              {{"type":"paragraph","content":"Closing summary for chunk {index} with practical usage remarks and boundaries."}}
+            ]
+          }}
+        ]
+      }}
+    }}
+    """
+
+
+def test_ai_service_successful_chunked_generation_flow():
+    source = _very_long_chunkable_source()
+    chunks = chunk_text(source)
+    assert len(chunks) > 1
+    responses = [_rich_chunk_response(i + 1) for i in range(len(chunks))]
+    service = AIService(client=_StubClient(responses))
+
+    result = service.generate_project_draft(source, max_attempts=1)
+    assert result.ok is True
+    assert result.chunked_mode is True
+    assert result.total_chunks == len(chunks)
+    assert result.completed_chunks == len(chunks)
+    assert result.merge_performed is True
+    assert result.validation_report is not None and result.validation_report.ok is True
+    assert result.sanitized_payload is not None
+    assert len(result.sanitized_payload["project"]["subjects"]) >= len(chunks)
+    assert any("processing chunk 1 of" in prompt.lower() for prompt in service.client.prompts)
+
+
+def test_ai_service_chunk_failure_propagates_with_index():
+    source = _very_long_chunkable_source()
+    chunks = chunk_text(source)
+    assert len(chunks) > 1
+    responses = [_rich_chunk_response(1), "not-json"] + [_rich_chunk_response(i + 3) for i in range(max(0, len(chunks) - 2))]
+    service = AIService(client=_StubClient(responses))
+
+    result = service.generate_project_draft(source, max_attempts=1)
+    assert result.ok is False
+    assert result.chunked_mode is True
+    assert result.stage == "chunk_generation"
+    assert result.failed_chunk_indices
+    assert result.failed_chunk_indices[0] == 2
+    assert result.completed_chunks == 1
+
+
+def test_ai_service_chunked_mode_improves_over_single_shot_sparse_failure():
+    source = _very_long_chunkable_source()
+
+    single_shot_client = _StubClient([_valid_minimal_project_json()])
+    single_shot_service = AIService(client=single_shot_client)
+    single_result = single_shot_service.generate_project_draft(
+        source,
+        max_attempts=1,
+        _force_single_shot=True,
+    )
+    assert single_result.ok is False
+    assert single_result.failure_class == "semantic"
+
+    chunks = chunk_text(source)
+    chunked_client = _StubClient([_rich_chunk_response(i + 1) for i in range(len(chunks))])
+    chunked_service = AIService(client=chunked_client)
+    chunked_result = chunked_service.generate_project_draft(source, max_attempts=1)
+
+    assert chunked_result.ok is True
+    assert chunked_result.chunked_mode is True
+    assert chunked_result.total_chunks == len(chunks)
