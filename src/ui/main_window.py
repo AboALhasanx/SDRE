@@ -8,6 +8,7 @@ from tkinter import filedialog, messagebox, ttk
 import customtkinter as ctk
 
 from src.ui.controllers.app_controller import AppController
+from src.ui.forms.ai_import_panel import AIImportPanel
 from src.ui.forms.block_forms import make_block_form
 from src.ui.forms.json_import_panel import JsonImportPanel
 from src.ui.forms.project_settings import ProjectSettingsDialog
@@ -133,6 +134,7 @@ class MainWindow(ctk.CTk):
         self.editor_tabs.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
         self.editor_tabs.add("Block Editor")
         self.editor_tabs.add("JSON Import")
+        self.editor_tabs.add("AI Draft")
 
         self.block_editor_tab = self.editor_tabs.tab("Block Editor")
         self.block_editor_tab.grid_columnconfigure(0, weight=1)
@@ -141,6 +143,10 @@ class MainWindow(ctk.CTk):
         self.json_tab = self.editor_tabs.tab("JSON Import")
         self.json_tab.grid_columnconfigure(0, weight=1)
         self.json_tab.grid_rowconfigure(0, weight=1)
+
+        self.ai_tab = self.editor_tabs.tab("AI Draft")
+        self.ai_tab.grid_columnconfigure(0, weight=1)
+        self.ai_tab.grid_rowconfigure(0, weight=1)
 
         self.editor_placeholder = ctk.CTkLabel(self.block_editor_tab, text="Select a block to edit.", anchor="center")
         self.editor_placeholder.grid(row=0, column=0, sticky="nsew", padx=12, pady=12)
@@ -153,6 +159,13 @@ class MainWindow(ctk.CTk):
             on_load_file=self._load_json_from_file_into_workspace,
         )
         self.json_import_panel.grid(row=0, column=0, sticky="nsew")
+
+        self.ai_import_panel = AIImportPanel(
+            self.ai_tab,
+            on_generate=self._generate_ai_draft,
+            on_import=self._import_ai_draft,
+        )
+        self.ai_import_panel.grid(row=0, column=0, sticky="nsew")
 
         # Build/preview action bar
         actions = ctk.CTkFrame(self)
@@ -418,6 +431,35 @@ class MainWindow(ctk.CTk):
             self.logs.append("JSON import failed.")
             self.logs.append(json.dumps(rep.model_dump(), ensure_ascii=False, indent=2))
             self.logs.set_status(f"JSON import failed at {rep.stage}")
+        return rep
+
+    def _generate_ai_draft(self, raw_text: str, title: str | None, author: str | None):
+        result = self.controller.generate_ai_draft(raw_text, title_hint=title, author_hint=author)
+        self.logs.clear()
+        if result.ok:
+            self.logs.append("AI draft generated and validated.")
+            self.logs.set_status("AI draft ready for import")
+        else:
+            self.logs.append(f"AI draft failed at stage: {result.stage}")
+            if result.validation_report is not None:
+                self.logs.append(json.dumps(result.validation_report.model_dump(), ensure_ascii=False, indent=2))
+            elif result.message:
+                self.logs.append(result.message)
+            self.logs.set_status(f"AI draft failed at {result.stage}")
+        return result
+
+    def _import_ai_draft(self):
+        rep = self.controller.import_ai_generated_project()
+        self.logs.clear()
+        if rep.ok:
+            self._refresh_all()
+            self._update_title()
+            self.logs.append("Imported AI-generated project into current state.")
+            self.logs.set_status("AI project imported (unsaved)")
+        else:
+            self.logs.append("AI project import failed.")
+            self.logs.append(json.dumps(rep.model_dump(), ensure_ascii=False, indent=2))
+            self.logs.set_status(f"AI import failed at {rep.stage}")
         return rep
 
     def _load_json_from_file_into_workspace(self) -> tuple[str, str] | None:

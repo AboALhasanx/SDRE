@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from src.ai.ai_service import AIGenerationResult
 from src.services.build_service import BuildReport
 from src.ui.controllers.app_controller import AppController
 
@@ -102,3 +103,49 @@ def test_reset_output_settings_restores_defaults(tmp_path: Path):
     assert c.output_dir is None
     assert c.custom_filename == ""
     assert c.use_auto_name is True
+
+
+def test_ai_generate_and_import_pipeline(monkeypatch: pytest.MonkeyPatch):
+    c = AppController()
+    payload = {
+        "project": {
+            "meta": {
+                "id": "ai_project",
+                "title": "AI Project",
+                "author": "AI",
+                "language": "ar",
+                "direction": "rtl",
+                "version": "1.0.0",
+                "created_at": "2026-04-23T00:00:00Z",
+                "updated_at": "2026-04-23T00:00:00Z",
+            },
+            "theme": c.project_file.project.theme.model_dump(mode="json", exclude_none=True),
+            "subjects": [
+                {
+                    "id": "subject_1",
+                    "title": "S1",
+                    "blocks": [{"id": "paragraph_1", "type": "paragraph", "content": [{"type": "text", "value": "x"}]}],
+                }
+            ],
+        }
+    }
+
+    def _fake_generate(*args, **kwargs):
+        return AIGenerationResult(
+            ok=True,
+            stage="ok",
+            message="ok",
+            raw_output="{}",
+            parsed_draft={"project": {}},
+            sanitized_payload=payload,
+            validation_report=None,
+        )
+
+    monkeypatch.setattr(c.ai_service, "generate_project_draft", _fake_generate)
+    res = c.generate_ai_draft("source")
+    assert res.ok is True
+    assert c.ai_generated_payload == payload
+
+    rep = c.import_ai_generated_project()
+    assert rep.ok is True
+    assert c.project_file.project.meta.id == "ai_project"

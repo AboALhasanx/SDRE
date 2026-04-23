@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+from src.ai.ai_service import AIGenerationResult, AIService
 from src.generator.engine import generate_content
 from src.models.project import ProjectFile
 from src.services.build_service import BuildReport, build_pdf
@@ -32,6 +33,10 @@ class AppController:
         self.custom_filename: str = ""
         self.use_auto_name: bool = True
         self.last_output_pdf_path: Path | None = None
+        self.ai_service = AIService()
+        self.ai_last_result: AIGenerationResult | None = None
+        self.ai_generated_payload: dict | None = None
+        self.ai_generated_json_text: str = ""
 
     @staticmethod
     def _repo_root() -> Path:
@@ -137,6 +142,9 @@ class AppController:
         self.dirty = False
         self.last_validation = None
         self.last_build = None
+        self.ai_last_result = None
+        self.ai_generated_payload = None
+        self.ai_generated_json_text = ""
 
     def open_project(self, path: str | Path) -> ValidationReport:
         report = validate_project_file(path)
@@ -145,6 +153,9 @@ class AppController:
             self.project_file = ps.load_project_file(path)
             self.path = Path(path)
             self.dirty = False
+            self.ai_last_result = None
+            self.ai_generated_payload = None
+            self.ai_generated_json_text = ""
         return report
 
     def save(self) -> None:
@@ -179,9 +190,64 @@ class AppController:
             return report
 
         payload = json.loads(text)
-        self.project_file = ProjectFile.model_validate(payload)
+        return self.import_project_payload(payload, file_label="<json-import>")
+
+    def import_project_payload(self, payload: dict, *, file_label: str = "<import>") -> ValidationReport:
+        report = validate_project_data(payload, file_label=file_label)
+        self.last_validation = report
+        if not report.ok:
+            return report
+        self.project_file = ps.load_project_data(payload)
         self.mark_dirty()
         return report
+
+    def generate_ai_draft(
+        self,
+        raw_text: str,
+        *,
+        title_hint: str | None = None,
+        author_hint: str | None = None,
+    ) -> AIGenerationResult:
+        result = self.ai_service.generate_project_draft(
+            raw_text,
+            title_hint=title_hint,
+            author_hint=author_hint,
+        )
+        self.ai_last_result = result
+        self.ai_generated_payload = result.sanitized_payload if result.ok else None
+
+        if result.sanitized_payload is not None:
+            self.ai_generated_json_text = json.dumps(result.sanitized_payload, ensure_ascii=False, indent=2)
+        elif result.parsed_draft is not None:
+            self.ai_generated_json_text = json.dumps(result.parsed_draft, ensure_ascii=False, indent=2)
+        else:
+            self.ai_generated_json_text = result.raw_output or ""
+
+        if result.validation_report is not None:
+            self.last_validation = result.validation_report
+        return result
+
+    def import_ai_generated_project(self) -> ValidationReport:
+        from src.validation.errors import ErrorItem
+
+        if self.ai_generated_payload is None:
+            report = ValidationReport(
+                ok=False,
+                file="<ai-import>",
+                stage="ai_import",
+                errors=[
+                    ErrorItem(
+                        code="ai.import.missing_draft",
+                        severity="error",
+                        path="/",
+                        message="No validated AI draft available to import.",
+                        hint="Generate a draft first.",
+                    )
+                ],
+            )
+            self.last_validation = report
+            return report
+        return self.import_project_payload(self.ai_generated_payload, file_label="<ai-import>")
 
     def generate_typst_only(self) -> ValidationReport:
         payload = self._in_memory_payload()
