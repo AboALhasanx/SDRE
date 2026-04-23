@@ -50,6 +50,10 @@ Output requirements:
 5) Keep structure focused and practical (subjects -> blocks).
 6) Do NOT invent timestamps. Do NOT invent IDs. Do NOT invent complex theme details.
 7) If unsure about exact formatting, prefer simple paragraph blocks with text nodes.
+8) Preserve explicit heading/subheading lines from the source whenever possible.
+9) Heading-like source lines should generally become section/subsection blocks.
+10) Do not flatten clearly structured educational text into a few generic paragraphs.
+11) Preserve visible topical boundaries and their order as faithfully as possible.
 
 Compact shape reminder:
 {{
@@ -148,10 +152,21 @@ def build_semantic_retry_prompt(
     previous_json: Any | None = None,
     title_hint: str | None = None,
     author_hint: str | None = None,
+    heading_under_preserved: bool = False,
 ) -> str:
     title_note = _hint_line("Preferred title hint", title_hint)
     author_note = _hint_line("Preferred author hint", author_hint)
     reason_lines = "\n".join(f"- {r}" for r in semantic_reasons) or "- Previous output was too sparse."
+    heading_focus = ""
+    if heading_under_preserved:
+        heading_focus = """
+Heading fidelity correction (important):
+- Previous result lost heading structure from the source text.
+- Preserve explicit headings and subsection boundaries more faithfully.
+- Heading-like source lines should generally become section/subsection blocks.
+- Do not collapse heading lines into plain paragraph text unless absolutely necessary.
+""".strip()
+
     return f"""
 You previously generated an SDRE JSON draft that was technically valid but semantically incomplete.
 
@@ -165,9 +180,12 @@ Requirements for this retry:
 3) Avoid collapsing rich text into one tiny paragraph.
 4) Use only supported SDRE block/inline types.
 5) Do not invent IDs/timestamps/complex theme details.
+6) Keep explicit topical divisions visible in the final block structure.
 
 Why previous draft was rejected:
 {reason_lines}
+
+{heading_focus}
 
 Previous draft (for reference):
 {_json_snippet(previous_json, fallback="{}")}

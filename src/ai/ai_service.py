@@ -35,6 +35,10 @@ class SemanticAssessment:
     ok: bool
     score: float
     reasons: list[str]
+    heading_under_preserved: bool = False
+    source_heading_count: int = 0
+    generated_heading_count: int = 0
+    heading_coverage_ratio: float = 1.0
 
 
 @dataclass
@@ -115,6 +119,7 @@ class AIService:
         technical_previous_json: dict[str, Any] | None = None
         local_target: LocalizedBlockTarget | None = None
         semantic_reasons: list[str] = []
+        semantic_heading_under_preserved = False
 
         while attempts < attempt_limit:
             attempts += 1
@@ -128,6 +133,7 @@ class AIService:
                 technical_previous_json=technical_previous_json,
                 local_target=local_target,
                 semantic_reasons=semantic_reasons,
+                semantic_heading_under_preserved=semantic_heading_under_preserved,
                 last_sanitized=last_sanitized,
                 last_parsed=last_parsed,
             )
@@ -211,6 +217,7 @@ class AIService:
                     message="; ".join(semantic.reasons) if semantic.reasons else "Semantically incomplete output.",
                 )
                 semantic_reasons = semantic.reasons
+                semantic_heading_under_preserved = semantic.heading_under_preserved
                 if attempts < attempt_limit:
                     mode = AttemptMode.SEMANTIC_RETRY
                     correction_applied = True
@@ -275,6 +282,7 @@ class AIService:
         technical_previous_json: dict[str, Any] | None,
         local_target: LocalizedBlockTarget | None,
         semantic_reasons: list[str],
+        semantic_heading_under_preserved: bool,
         last_sanitized: dict[str, Any] | None,
         last_parsed: dict[str, Any] | None,
     ) -> str:
@@ -298,6 +306,7 @@ class AIService:
             previous_json=last_sanitized or last_parsed,
             title_hint=title_hint,
             author_hint=author_hint,
+            heading_under_preserved=semantic_heading_under_preserved,
         )
 
 
@@ -396,7 +405,8 @@ def _patch_localized_fragment(
 def _assess_semantic_completeness(raw_text: str, payload: dict[str, Any]) -> SemanticAssessment:
     text = raw_text.strip()
     text_length = len(text)
-    heading_lines = _count_heading_like_lines(text)
+    heading_candidates = _extract_heading_like_lines(text)
+    heading_lines = len(heading_candidates)
     subjects = payload.get("project", {}).get("subjects", [])
 
     blocks = []
@@ -421,18 +431,23 @@ def _assess_semantic_completeness(raw_text: str, payload: dict[str, Any]) -> Sem
     expected_blocks = _expected_block_count(text_length, heading_lines)
     reasons: list[str] = []
     score = 100.0
+    heading_under_preserved = False
 
     if block_count < expected_blocks:
         reasons.append(f"Too few blocks for source length ({block_count} < expected {expected_blocks}).")
         score -= min(45.0, (expected_blocks - block_count) * 8.0)
 
     if heading_lines >= 2:
-        expected_sections = max(1, min(heading_lines, 4))
-        if section_count < expected_sections:
-            reasons.append(
-                f"Heading coverage is sparse (sections/subsections {section_count} < expected {expected_sections})."
-            )
-            score -= min(30.0, (expected_sections - section_count) * 8.0)
+        heading_coverage_ratio = section_count / heading_lines if heading_lines else 1.0
+        min_heading_blocks = max(2, min(heading_lines, 6))
+        required_headings = max(2, min_heading_blocks // 2 + min_heading_blocks % 2)
+        if section_count < required_headings or heading_coverage_ratio < 0.5:
+            heading_under_preserved = True
+            reasons.append("Explicit headings were under-preserved.")
+            reasons.append("Source text appears structured, but generated section/subsection coverage is too low.")
+            score -= max(18.0, min(35.0, (required_headings - section_count) * 9.0))
+    else:
+        heading_coverage_ratio = 1.0
 
     if text_length >= 1200 and block_count <= 2:
         reasons.append("Long source text collapsed into very few blocks.")
@@ -443,7 +458,15 @@ def _assess_semantic_completeness(raw_text: str, payload: dict[str, Any]) -> Sem
         score -= 20.0
 
     score = max(0.0, round(score, 2))
-    return SemanticAssessment(ok=len(reasons) == 0, score=score, reasons=reasons)
+    return SemanticAssessment(
+        ok=len(reasons) == 0,
+        score=score,
+        reasons=reasons,
+        heading_under_preserved=heading_under_preserved,
+        source_heading_count=heading_lines,
+        generated_heading_count=section_count,
+        heading_coverage_ratio=round(heading_coverage_ratio, 3),
+    )
 
 
 def _expected_block_count(text_length: int, heading_count: int) -> int:
@@ -463,25 +486,76 @@ def _expected_block_count(text_length: int, heading_count: int) -> int:
 
 
 def _count_heading_like_lines(text: str) -> int:
+    return len(_extract_heading_like_lines(text))
+
+
+def _extract_heading_like_lines(text: str) -> list[str]:
     if not text:
-        return 0
-    count = 0
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
+        return []
+
+    lines = [line.strip() for line in text.splitlines()]
+    heading_lines: list[str] = []
+    for index, line in enumerate(lines):
         if not line:
             continue
         if re.match(r"^#{1,6}\s+\S+", line):
-            count += 1
+            heading_lines.append(line)
             continue
         if re.match(r"^\d+[\.\)]\s+\S+", line):
-            count += 1
+            heading_lines.append(line)
             continue
         if re.match(r"^(Chapter|Section|Part)\b[:\s]", line, flags=re.IGNORECASE):
-            count += 1
+            heading_lines.append(line)
             continue
         if line.endswith(":") and len(line.split()) <= 10:
-            count += 1
-    return count
+            heading_lines.append(line)
+            continue
+        if _looks_like_standalone_heading(line, lines, index):
+            heading_lines.append(line)
+            continue
+        if _looks_like_bilingual_heading(line):
+            heading_lines.append(line)
+    return heading_lines
+
+
+def _looks_like_standalone_heading(line: str, lines: list[str], index: int) -> bool:
+    words = line.split()
+    if not (1 <= len(words) <= 10):
+        return False
+    if len(line) > 90:
+        return False
+    if line[-1] in ".!?؟؛;,،":
+        return False
+    next_line = _next_non_empty_line(lines, index + 1)
+    if not next_line:
+        return False
+    if len(next_line.split()) < len(words) + 2:
+        return False
+    return True
+
+
+def _looks_like_bilingual_heading(line: str) -> bool:
+    if "(" not in line or ")" not in line:
+        return False
+    if len(line.split()) > 14:
+        return False
+    return _contains_arabic(line) and _contains_latin(line)
+
+
+def _next_non_empty_line(lines: list[str], start: int) -> str | None:
+    for idx in range(start, len(lines)):
+        candidate = lines[idx].strip()
+        if candidate:
+            return candidate
+    return None
+
+
+def _contains_arabic(text: str) -> bool:
+    return any("\u0600" <= ch <= "\u06FF" for ch in text)
+
+
+def _contains_latin(text: str) -> bool:
+    return any(("a" <= ch.lower() <= "z") for ch in text)
 
 
 def _is_non_trivial_block(block: dict[str, Any]) -> bool:

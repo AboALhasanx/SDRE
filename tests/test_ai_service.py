@@ -79,14 +79,78 @@ def _long_structured_source() -> str:
     )
 
 
+def _heading_rich_source() -> str:
+    return "\n".join(
+        [
+            "مقدمة عن الخوارزمية",
+            "هذه الفقرة تقدّم فكرة عامة عن الخوارزمية وسياق استخدامها في المقررات التعليمية.",
+            "Time Complexity (تعقيد الوقت)",
+            "هنا نشرح الفرق بين O(n) و O(log n) وتأثير كل منهما على الأداء.",
+            "Space Complexity",
+            "يوضح هذا القسم استخدام الذاكرة في أفضل وأسوأ الحالات.",
+            "Edge Cases",
+            "هذا القسم يذكر القيم الفارغة والتكرارات والحالات الحدية.",
+        ]
+    )
+
+
+def _understructured_paragraph_only_json() -> str:
+    return """
+    {
+      "project": {
+        "meta": {"title": "Flat Output"},
+        "subjects": [
+          {
+            "title": "Algorithm Notes",
+            "blocks": [
+              {"type":"paragraph","content":"مقدمة عامة عن الموضوع مع شرح تمهيدي مناسب."},
+              {"type":"paragraph","content":"تفاصيل متوسطة عن التعقيد الزمني واستخدام الحالات المختلفة."},
+              {"type":"paragraph","content":"عرض مبسط لتعقيد الذاكرة مع أمثلة صغيرة."},
+              {"type":"paragraph","content":"قائمة بالحالات الحدية وكيفية التعامل معها."},
+              {"type":"paragraph","content":"خلاصة عامة تربط المفاهيم السابقة في سياق واحد."}
+            ]
+          }
+        ]
+      }
+    }
+    """
+
+
+def _heading_preserving_json() -> str:
+    return """
+    {
+      "project": {
+        "meta": {"title": "Structured Output"},
+        "subjects": [
+          {
+            "title": "Algorithm Notes",
+            "blocks": [
+              {"type":"section","title":"مقدمة عن الخوارزمية"},
+              {"type":"paragraph","content":"هذه الفقرة تقدّم فكرة عامة عن الخوارزمية وسياق استخدامها في المقررات التعليمية."},
+              {"type":"section","title":"Time Complexity (تعقيد الوقت)"},
+              {"type":"paragraph","content":"هنا نشرح الفرق بين O(n) و O(log n) وتأثير كل منهما على الأداء."},
+              {"type":"subsection","title":"Space Complexity"},
+              {"type":"paragraph","content":"يوضح هذا القسم استخدام الذاكرة في أفضل وأسوأ الحالات."},
+              {"type":"subsection","title":"Edge Cases"},
+              {"type":"paragraph","content":"هذا القسم يذكر القيم الفارغة والتكرارات والحالات الحدية."}
+            ]
+          }
+        ]
+      }
+    }
+    """
+
+
 def test_ai_service_accepts_valid_json_draft():
-    service = AIService(client=_StubClient([_valid_minimal_project_json()]))
+    client = _StubClient([_valid_minimal_project_json()])
+    service = AIService(client=client)
     result = service.generate_project_draft("Any text", max_attempts=1)
     assert result.ok is True
     assert result.validation_report is not None and result.validation_report.ok is True
     assert result.sanitized_payload is not None
     assert result.sanitized_payload["project"]["subjects"]
     assert result.attempts == 1
+    assert "Heading-like source lines should generally become section/subsection blocks." in client.prompts[0]
 
 
 def test_ai_service_classifies_parse_failure_as_technical():
@@ -135,6 +199,18 @@ def test_ai_service_classifies_semantic_under_generation():
     assert result.semantic_score is not None
 
 
+def test_ai_service_detects_heading_under_preservation_semantically():
+    service = AIService(client=_StubClient([_understructured_paragraph_only_json()]))
+    result = service.generate_project_draft(_heading_rich_source(), max_attempts=1)
+    assert result.ok is False
+    assert result.failure_class == "semantic"
+    assert any("Explicit headings were under-preserved." in reason for reason in result.semantic_reasons)
+    assert any(
+        "Source text appears structured, but generated section/subsection coverage is too low." in reason
+        for reason in result.semantic_reasons
+    )
+
+
 def test_ai_service_retries_with_semantic_prompt_and_recovers():
     client = _StubClient([_valid_minimal_project_json(), _valid_rich_project_json()])
     service = AIService(client=client)
@@ -144,6 +220,19 @@ def test_ai_service_retries_with_semantic_prompt_and_recovers():
     assert result.attempts == 2
     assert result.correction_applied is True
     assert any("semantically incomplete" in prompt for prompt in client.prompts[1:])
+
+
+def test_ai_service_semantic_retry_prompt_targets_heading_structure_loss():
+    client = _StubClient([_understructured_paragraph_only_json(), _heading_preserving_json()])
+    service = AIService(client=client)
+
+    result = service.generate_project_draft(_heading_rich_source())
+    assert result.ok is True
+    assert result.attempts == 2
+    retry_prompt = client.prompts[1]
+    assert "lost heading structure" in retry_prompt
+    assert "Heading-like source lines should generally become section/subsection blocks." in retry_prompt
+    assert "Do not collapse heading lines into plain paragraph text unless absolutely necessary." in retry_prompt
 
 
 def test_ai_service_retries_with_technical_prompt_and_recovers():
